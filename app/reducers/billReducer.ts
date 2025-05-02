@@ -1,0 +1,85 @@
+import { BillAction, BillState } from '../lib/billTypes';
+
+// สร้าง reducer function
+export function billReducer(state: BillState, action: BillAction): BillState {
+  switch (action.type) {
+    case 'SET_BILL_NAME':
+      return { ...state, billName: action.payload };
+    case 'SET_TOTAL_AMOUNT':
+      return { ...state, totalAmount: action.payload };
+    case 'SET_VAT':
+      return { ...state, vat: action.payload };
+    case 'SET_DISCOUNT':
+      return { ...state, discount: action.payload };
+    case 'SET_SERVICE_CHARGE':
+      return { ...state, serviceCharge: action.payload };
+    case 'SET_SPLIT_METHOD':
+      return { ...state, splitMethod: action.payload };
+    case 'SET_CATEGORY_ID':
+      return { ...state, categoryId: action.payload };
+    case 'SET_FOOD_ITEMS':
+      return { ...state, foodItems: action.payload };
+    case 'ADD_FOOD_ITEM':
+      return { ...state, foodItems: [...state.foodItems, action.payload] };
+    case 'UPDATE_FOOD_ITEM':
+      return {
+        ...state,
+        foodItems: state.foodItems.map(item =>
+          item.id === action.payload.id ? action.payload : item
+        ),
+      };
+    case 'REMOVE_FOOD_ITEM':
+      return {
+        ...state,
+        foodItems: state.foodItems.filter(item => item.id !== action.payload),
+      };
+    case 'SET_PARTICIPANTS':
+      return { ...state, participants: action.payload };
+    case 'ADD_PARTICIPANT':
+      return {
+        ...state,
+        participants: [...state.participants, action.payload],
+      };
+    case 'UPDATE_PARTICIPANT':
+      return {
+        ...state,
+        participants: state.participants.map(p =>
+          p.id === action.payload.id ? action.payload : p
+        ),
+      };
+    case 'REMOVE_PARTICIPANT':
+      return {
+        ...state,
+        participants: state.participants.filter(p => p.id !== action.payload),
+      };
+    case 'SET_SPLIT_RESULTS':
+      return { ...state, splitResults: action.payload };
+    case 'SET_BILLS':
+      return { ...state, bills: action.payload };
+    case 'ADD_BILLS':
+      return { ...state, bills: [...state.bills, ...action.payload] };
+    case 'SET_TOAST':
+      return { ...state, toast: action.payload };
+    case 'RESET_BILL':
+      return {
+        ...state,
+        billName: '',
+        totalAmount: 0,
+        vat: 0,
+        discount: 0,
+        serviceCharge: 0,
+        splitMethod: 'equal',
+        categoryId: 'food',
+        foodItems: [],
+        participants: [],
+        splitResults: [],
+        // คงค่าบิลและการแสดง toast ไว้
+        bills: state.bills,
+        toast: state.toast
+      };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
+    default:
+      return state;
+  }
+} 

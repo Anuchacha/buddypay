@@ -1,0 +1,82 @@
+import { Timestamp } from 'firebase/firestore';
+import { Bill, FoodItem, Participant } from './schema';
+import { SplitResult } from './billCalculator';
+
+// ขยาย Type Bill สำหรับข้อมูลที่มาจาก Firestore ซึ่งมี id เพิ่มเติม
+export interface FirestoreBill extends Bill {
+  id: string;
+}
+
+// กำหนด Action Types สำหรับ reducer
+export type BillAction =
+  | { type: 'SET_BILL_NAME'; payload: string }
+  | { type: 'SET_TOTAL_AMOUNT'; payload: number }
+  | { type: 'SET_VAT'; payload: number }
+  | { type: 'SET_DISCOUNT'; payload: number }
+  | { type: 'SET_SERVICE_CHARGE'; payload: number }
+  | { type: 'SET_SPLIT_METHOD'; payload: 'equal' | 'itemized' }
+  | { type: 'SET_CATEGORY_ID'; payload: string }
+  | { type: 'SET_FOOD_ITEMS'; payload: FoodItem[] }
+  | { type: 'ADD_FOOD_ITEM'; payload: FoodItem }
+  | { type: 'UPDATE_FOOD_ITEM'; payload: FoodItem }
+  | { type: 'REMOVE_FOOD_ITEM'; payload: string }
+  | { type: 'SET_PARTICIPANTS'; payload: Participant[] }
+  | { type: 'ADD_PARTICIPANT'; payload: Participant }
+  | { type: 'UPDATE_PARTICIPANT'; payload: Participant }
+  | { type: 'REMOVE_PARTICIPANT'; payload: string }
+  | { type: 'SET_SPLIT_RESULTS'; payload: SplitResult[] }
+  | { type: 'SET_BILLS'; payload: FirestoreBill[] }
+  | { type: 'ADD_BILLS'; payload: FirestoreBill[] }
+  | { type: 'SET_TOAST'; payload: { show: boolean; message: string; type: 'success' | 'error' | 'warning' } }
+  | { type: 'RESET_BILL' }
+  | { type: 'SET_LOADING'; payload: boolean };
+
+// กำหนด State Type
+export interface BillState {
+  billName: string;
+  totalAmount: number;
+  vat: number;
+  discount: number;
+  serviceCharge: number;
+  splitMethod: 'equal' | 'itemized';
+  categoryId: string;
+  foodItems: FoodItem[];
+  participants: Participant[];
+  splitResults: SplitResult[];
+  toast: {
+    show: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning';
+  };
+  bills: FirestoreBill[];
+  isLoading: boolean;
+}
+
+// สร้าง initial state
+export const initialState: BillState = {
+  billName: '',
+  totalAmount: 0,
+  vat: 0,
+  discount: 0,
+  serviceCharge: 0,
+  splitMethod: 'equal',
+  categoryId: 'food',
+  foodItems: [],
+  participants: [],
+  splitResults: [],
+  toast: { show: false, message: '', type: 'success' },
+  bills: [],
+  isLoading: false
+};
+
+// กำหนด steps ในการหารบิล
+export const BILL_STEPS = [
+  { title: 'ผู้ร่วมบิล', description: 'ใส่ชื่อผู้ร่วมบิล' },
+  { title: 'รายการอาหาร', description: 'ใส่รายการอาหาร' },
+  { title: 'วิธีหาร', description: 'เลือกวิธีหารบิล' },
+  { title: 'ข้อมูลบิล', description: 'ตั้งชื่อและรายละเอียด' },
+  { title: 'ผลลัพธ์', description: 'สรุปการหารบิล' }
+];
+
+// ค่าคงที่สำหรับการทำ pagination
+export const BILLS_PER_PAGE = 10; 
