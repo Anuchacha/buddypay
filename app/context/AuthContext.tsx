@@ -12,6 +12,7 @@ import { getErrorMessage, logErrorToAnalytics } from '../lib/errorMessages';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Cookies from 'js-cookie';
+import { useToast } from './ToastContext';
 
 type AuthContextType = {
   user: User | null;
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
   const { auth, signIn, signUp, signOut, signInWithGoogle, getUserRole } = useFirebase();
+  const { showToast } = useToast();
 
   // ตรวจสอบสถานะการล็อกอินเมื่อคอมโพเนนต์โหลด
   useEffect(() => {
@@ -90,6 +92,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signIn(email, password);
       // หมายเหตุ: บทบาทจะถูกดึงและตั้งค่าในตัวจัดการ onAuthStateChanged
       
+      // แสดงการแจ้งเตือน
+      showToast('เข้าสู่ระบบสำเร็จ', 'success');
+      
       // ดึง returnUrl จาก sessionStorage ถ้ามี
       const returnUrl = sessionStorage.getItem('returnUrl') || '/';
       sessionStorage.removeItem('returnUrl');
@@ -99,6 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
+      
+      // แสดงการแจ้งเตือนข้อผิดพลาด
+      showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
       logErrorToAnalytics(error.code || 'login-error', error.message);
@@ -114,6 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signUp(email, password, name);
       // หมายเหตุ: บทบาทจะถูกดึงและตั้งค่าในตัวจัดการ onAuthStateChanged
       
+      // แสดงการแจ้งเตือน
+      showToast('สมัครสมาชิกและเข้าสู่ระบบสำเร็จ', 'success');
+      
       // ดึง returnUrl จาก sessionStorage ถ้ามี
       const returnUrl = sessionStorage.getItem('returnUrl') || '/';
       sessionStorage.removeItem('returnUrl');
@@ -123,6 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
+      
+      // แสดงการแจ้งเตือนข้อผิดพลาด
+      showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
       logErrorToAnalytics(error.code || 'signup-error', error.message);
@@ -138,6 +152,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await signInWithGoogle();
       // หมายเหตุ: บทบาทจะถูกดึงและตั้งค่าในตัวจัดการ onAuthStateChanged
       
+      // แสดงการแจ้งเตือน
+      showToast('เข้าสู่ระบบด้วย Google สำเร็จ', 'success');
+      
       // ดึง returnUrl จาก sessionStorage ถ้ามี
       const returnUrl = sessionStorage.getItem('returnUrl') || '/';
       sessionStorage.removeItem('returnUrl');
@@ -147,6 +164,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
+      
+      // แสดงการแจ้งเตือนข้อผิดพลาด
+      showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
       logErrorToAnalytics(error.code || 'google-login-error', error.message);
@@ -159,6 +179,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut();
+      
+      // แสดงการแจ้งเตือน
+      showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+      
       router.push('/');
       router.refresh();
       // ล้าง userRole จาก sessionStorage และ cookies
@@ -170,6 +194,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
+      
+      // แสดงการแจ้งเตือนข้อผิดพลาด
+      showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
       logErrorToAnalytics(error.code || 'logout-error', error.message);
