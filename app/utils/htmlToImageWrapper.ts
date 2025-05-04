@@ -46,8 +46,10 @@ export async function toBlob(node: HTMLElement, options?: object): Promise<Blob>
 }
 
 // Default export ที่มี method ทั้งหมด
-export default {
+const htmlToImageUtils = {
   toPng,
   toJpeg,
   toBlob
-}; 
+};
+
+export default htmlToImageUtils; 

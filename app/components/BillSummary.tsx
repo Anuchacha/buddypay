@@ -230,10 +230,10 @@ export default function BillSummary({
     
     try {
       setIsModuleLoading(true);
-      const module = await import('../utils/htmlToImageWrapper');
-      setHtmlToImageModule(module);
+      const imageModule = await import('../utils/htmlToImageWrapper');
+      setHtmlToImageModule(imageModule);
       setModuleError(null);
-      return module;
+      return imageModule;
     } catch (err) {
       console.error('ไม่สามารถโหลดโมดูล html-to-image:', err);
       setModuleError('ไม่สามารถโหลดเครื่องมือสร้างรูปภาพได้');
