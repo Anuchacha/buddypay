@@ -67,28 +67,6 @@ export default function ShareBillPage() {
     };
   }, [setupRealtimeListener]);
 
-  // useEffect สำหรับเพิ่มผู้เข้าร่วมคนแรกเมื่อเปิดหน้า
-  useEffect(() => {
-    if (state.participants.length === 0) {
-      addParticipant();
-    }
-  }, [state.participants.length, addParticipant]);
-
-  // useEffect สำหรับเพิ่มรายการอาหารเมื่อเข้า step 1
-  useEffect(() => {
-    if (currentStep === 1 && state.foodItems.length === 0) {
-      const newFoodItem = {
-        id: uuidv4(),
-        name: '',
-        price: 0,
-        participants: state.splitMethod === 'equal' 
-          ? state.participants.map(p => p.id) 
-          : []
-      };
-      dispatch({ type: 'ADD_FOOD_ITEM', payload: newFoodItem });
-    }
-  }, [currentStep, state.foodItems.length, state.splitMethod, state.participants, dispatch]);
-
   // useEffect สำหรับอัพเดตผลลัพธ์ที่ step 4
   useEffect(() => {
     if (currentStep === 4 && calculatedResults.length > 0) {

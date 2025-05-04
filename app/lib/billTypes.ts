@@ -7,6 +7,32 @@ export interface FirestoreBill extends Bill {
   id: string;
 }
 
+// สถานะแอป
+export interface BillState {
+  billName: string;
+  totalAmount: number;
+  vat: number;
+  discount: number;
+  serviceCharge: number;
+  splitMethod: 'equal' | 'itemized';
+  categoryId: string;
+  foodItems: FoodItem[];
+  participants: Participant[];
+  splitResults: SplitResult[];
+  bills: FirestoreBill[];
+  toast: {
+    show: boolean;
+    message: string;
+    type: 'success' | 'error' | 'warning';
+  };
+  isLoading: boolean;
+}
+
+// ขยาย type Participant เพื่อรองรับการส่งผู้เข้าร่วมใหม่
+export type ParticipantWithFlag = Participant & {
+  isNew?: boolean;
+}
+
 // กำหนด Action Types สำหรับ reducer
 export type BillAction =
   | { type: 'SET_BILL_NAME'; payload: string }
@@ -22,7 +48,7 @@ export type BillAction =
   | { type: 'REMOVE_FOOD_ITEM'; payload: string }
   | { type: 'SET_PARTICIPANTS'; payload: Participant[] }
   | { type: 'ADD_PARTICIPANT'; payload: Participant }
-  | { type: 'UPDATE_PARTICIPANT'; payload: Participant }
+  | { type: 'UPDATE_PARTICIPANT'; payload: ParticipantWithFlag }
   | { type: 'REMOVE_PARTICIPANT'; payload: string }
   | { type: 'SET_SPLIT_RESULTS'; payload: SplitResult[] }
   | { type: 'SET_BILLS'; payload: FirestoreBill[] }
@@ -30,27 +56,6 @@ export type BillAction =
   | { type: 'SET_TOAST'; payload: { show: boolean; message: string; type: 'success' | 'error' | 'warning' } }
   | { type: 'RESET_BILL' }
   | { type: 'SET_LOADING'; payload: boolean };
-
-// กำหนด State Type
-export interface BillState {
-  billName: string;
-  totalAmount: number;
-  vat: number;
-  discount: number;
-  serviceCharge: number;
-  splitMethod: 'equal' | 'itemized';
-  categoryId: string;
-  foodItems: FoodItem[];
-  participants: Participant[];
-  splitResults: SplitResult[];
-  toast: {
-    show: boolean;
-    message: string;
-    type: 'success' | 'error' | 'warning';
-  };
-  bills: FirestoreBill[];
-  isLoading: boolean;
-}
 
 // สร้าง initial state
 export const initialState: BillState = {

@@ -22,12 +22,23 @@ export function billReducer(state: BillState, action: BillAction): BillState {
     case 'ADD_FOOD_ITEM':
       return { ...state, foodItems: [...state.foodItems, action.payload] };
     case 'UPDATE_FOOD_ITEM':
-      return {
-        ...state,
-        foodItems: state.foodItems.map(item =>
-          item.id === action.payload.id ? action.payload : item
-        ),
-      };
+      // ตรวจสอบว่าเป็นการเพิ่มรายการอาหารใหม่พร้อมข้อมูลหรือไม่
+      if ('isNew' in action.payload && action.payload.isNew === true) {
+        // กรณีเป็นรายการอาหารใหม่ ให้เพิ่มเข้าไปในรายการเลย
+        const { isNew, ...newFoodItem } = action.payload;
+        return {
+          ...state,
+          foodItems: [...state.foodItems, newFoodItem]
+        };
+      } else {
+        // กรณีเป็นการอัปเดตรายการที่มีอยู่แล้ว
+        return {
+          ...state,
+          foodItems: state.foodItems.map(item =>
+            item.id === action.payload.id ? action.payload : item
+          ),
+        };
+      }
     case 'REMOVE_FOOD_ITEM':
       return {
         ...state,
@@ -41,16 +52,47 @@ export function billReducer(state: BillState, action: BillAction): BillState {
         participants: [...state.participants, action.payload],
       };
     case 'UPDATE_PARTICIPANT':
-      return {
-        ...state,
-        participants: state.participants.map(p =>
-          p.id === action.payload.id ? action.payload : p
-        ),
-      };
+      // ตรวจสอบว่าเป็นการเพิ่มผู้เข้าร่วมใหม่พร้อมชื่อหรือไม่
+      if ('isNew' in action.payload && action.payload.isNew === true) {
+        // กรณีเป็นผู้เข้าร่วมใหม่ ให้เพิ่มเข้าไปในรายการเลย
+        const { isNew, ...newParticipant } = action.payload;
+        
+        // ถ้าเป็นโหมดหารเท่ากัน ให้เพิ่มผู้เข้าร่วมใหม่ในทุกรายการอาหาร
+        if (state.splitMethod === 'equal' && state.foodItems.length > 0) {
+          const updatedFoodItems = state.foodItems.map(item => ({
+            ...item,
+            participants: [...item.participants, newParticipant.id]
+          }));
+          
+          return {
+            ...state,
+            participants: [...state.participants, newParticipant],
+            foodItems: updatedFoodItems
+          };
+        }
+        
+        return {
+          ...state,
+          participants: [...state.participants, newParticipant]
+        };
+      } else {
+        // กรณีเป็นการอัปเดตผู้เข้าร่วมที่มีอยู่แล้ว
+        return {
+          ...state,
+          participants: state.participants.map(p =>
+            p.id === action.payload.id ? action.payload : p
+          ),
+        };
+      }
     case 'REMOVE_PARTICIPANT':
       return {
         ...state,
         participants: state.participants.filter(p => p.id !== action.payload),
+        // ลบผู้เข้าร่วมออกจากรายการอาหารทั้งหมดด้วย
+        foodItems: state.foodItems.map(item => ({
+          ...item,
+          participants: item.participants.filter(id => id !== action.payload)
+        }))
       };
     case 'SET_SPLIT_RESULTS':
       return { ...state, splitResults: action.payload };

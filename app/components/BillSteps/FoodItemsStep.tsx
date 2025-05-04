@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { BillState } from '../../lib/billTypes';
 import FoodItemForm from '../../components/FoodItemForm';
+import QuickAddFoodItemsModal from '../../components/QuickAddFoodItemsModal';
 
 interface FoodItemsStepProps {
   state: BillState;
@@ -16,6 +19,56 @@ export default function FoodItemsStep({
   handleRemoveFoodItem,
   onUpdateFoodItem
 }: FoodItemsStepProps) {
+  const [quickAddName, setQuickAddName] = useState('');
+  const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
+
+  // เปิด modal อัตโนมัติเมื่อมาถึง step นี้และยังไม่มีรายการอาหาร
+  useEffect(() => {
+    if (state.foodItems.length === 0) {
+      setIsQuickAddModalOpen(true);
+    }
+  }, []); // เรียกทำงานเพียงครั้งเดียวเมื่อ component ถูกโหลด
+
+  const handleQuickAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (quickAddName.trim()) {
+      // เพิ่มรายการอาหารใหม่
+      addFoodItem();
+      
+      // อัปเดตชื่อของรายการอาหารที่เพิ่งเพิ่ม
+      if (state.foodItems.length > 0) {
+        const latestItem = state.foodItems[state.foodItems.length - 1];
+        onUpdateFoodItem({
+          ...latestItem,
+          name: quickAddName.trim()
+        });
+      }
+      
+      // ล้างฟอร์ม
+      setQuickAddName('');
+    }
+  };
+
+  // ฟังก์ชันเพิ่มรายการอาหารผ่าน modal
+  const handleQuickAddFromModal = (name: string, price: number) => {
+    // สร้างรายการอาหารใหม่ด้วยชื่อและราคาที่กำหนด
+    const itemId = crypto.randomUUID();
+    const newFoodItem = {
+      id: itemId,
+      name: name.trim(),
+      price: price,
+      participants: state.splitMethod === 'equal' 
+        ? state.participants.map(p => p.id) 
+        : []
+    };
+    
+    // เรียกใช้ dispatch เพื่อเพิ่มรายการอาหารใหม่พร้อมข้อมูลเลย
+    onUpdateFoodItem({
+      ...newFoodItem,
+      isNew: true
+    });
+  };
+
   return (
     <>
       <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b px-6 py-4">
@@ -23,11 +76,15 @@ export default function FoodItemsStep({
           <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 text-sm">2</span>
           รายการอาหาร
         </CardTitle>
-        <Button onClick={addFoodItem} size="sm" className="bg-primary hover:bg-primary/90">
+        <Button 
+          onClick={() => setIsQuickAddModalOpen(true)} 
+          size="sm" 
+          className="bg-primary hover:bg-primary/90"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /> 
           </svg>
-          เพิ่มรายการอาหาร
+          เพิ่มหลายรายการ
         </Button>
       </CardHeader>
       <CardContent className="p-6">
@@ -39,6 +96,24 @@ export default function FoodItemsStep({
             เพิ่มรายการอาหารทั้งหมดที่คุณและเพื่อนสั่ง
           </p>
         </div>
+
+        {/* ฟอร์มเพิ่มรายการอาหารแบบเร็ว */}
+        <form onSubmit={handleQuickAdd} className="flex items-center space-x-2 mb-5">
+          <div className="flex-1">
+            <Input
+              placeholder="ชื่ออาหาร เช่น ข้าวผัดหมู"
+              value={quickAddName}
+              onChange={(e) => setQuickAddName(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <Button type="submit" className="bg-primary hover:bg-primary/90">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            เพิ่มรายการ
+          </Button>
+        </form>
         
         {state.foodItems.length > 0 ? (
           <div className="space-y-4">
@@ -63,7 +138,7 @@ export default function FoodItemsStep({
                 ยังไม่มีรายการอาหาร กดปุ่ม 'เพิ่มรายการ' เพื่อเพิ่มอาหารที่สั่ง
               </p>
               <Button 
-                onClick={addFoodItem} 
+                onClick={() => setIsQuickAddModalOpen(true)} 
                 className="bg-primary hover:bg-primary/90 text-white"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,6 +150,14 @@ export default function FoodItemsStep({
           </div>
         )}
       </CardContent>
+
+      {/* Modal เพิ่มรายการอาหารแบบต่อเนื่อง */}
+      <QuickAddFoodItemsModal
+        isOpen={isQuickAddModalOpen}
+        onClose={() => setIsQuickAddModalOpen(false)}
+        onAdd={handleQuickAddFromModal}
+        currentCount={state.foodItems.length}
+      />
     </>
   );
 } 
