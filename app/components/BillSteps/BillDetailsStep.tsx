@@ -2,9 +2,11 @@ import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { BillState } from '../../lib/billTypes';
 import { CategorySelect } from '../../../CategorySelect';
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, FileText, Info, LucideIcon, Receipt, Utensils, Coffee, ShoppingBag, Film, Pizza, Car, Droplet, Martini } from 'lucide-react';
+import { Check, ChevronDown, FileText, Info, LucideIcon, Receipt, Utensils, Coffee, ShoppingBag, Film, Pizza, Car, Droplet, Martini, Book, Shirt, Train, Home, CreditCard, Award, Heart, Music, Send, Briefcase, Tag, Flame, MapPin } from 'lucide-react';
+import { BillTemplate, billTemplates, getUniqueCategories as getBillCategories, findBillTemplates, groupBillTemplatesByCategory } from '../../data/billTemplates';
+import { localStorageUtils } from '../../utils/localStorage';
 
 interface BillDetailsStepProps {
   state: BillState;
@@ -13,12 +15,6 @@ interface BillDetailsStepProps {
   setPromptPayId: (value: string) => void;
   notes: string;
   setNotes: (value: string) => void;
-}
-
-type BillTemplate = {
-  name: string;
-  icon: LucideIcon;
-  color: string;
 }
 
 export default function BillDetailsStep({
@@ -30,24 +26,91 @@ export default function BillDetailsStep({
   setNotes
 }: BillDetailsStepProps) {
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [recentlyUsed, setRecentlyUsed] = useState<string[]>([]);
+
+  // ดึงบิลที่ใช้บ่อยจาก localStorage แบบปลอดภัย
+  useEffect(() => {
+    const storedRecent = localStorageUtils.getItem('recentBills', []);
+    if (storedRecent && Array.isArray(storedRecent)) {
+      setRecentlyUsed(storedRecent);
+    }
+  }, []);
+
+  // บันทึกบิลที่ใช้บ่อยด้วย utility function
+  const saveRecentBill = useCallback((billName: string) => {
+    const updatedRecent = [billName, ...recentlyUsed.filter(name => name !== billName).slice(0, 4)];
+    setRecentlyUsed(updatedRecent);
+    
+    const saved = localStorageUtils.setItem('recentBills', updatedRecent);
+    if (!saved) {
+      // กรณีบันทึกไม่สำเร็จ ให้ลองลบรายการเก่าทั้งหมดแล้วบันทึกแค่รายการใหม่
+      localStorageUtils.setItem('recentBills', [billName]);
+    }
+  }, [recentlyUsed]);
 
   const billTemplates: BillTemplate[] = [
-    { name: 'อาหารกลางวัน', icon: Utensils, color: 'text-orange-500' },
-    { name: 'อาหารเย็น', icon: Utensils, color: 'text-blue-500' },
-    { name: 'ร้านอาหารญี่ปุ่น', icon: Utensils, color: 'text-red-500' },
-    { name: 'คาเฟ่', icon: Coffee, color: 'text-amber-600' },
-    { name: 'พิซซ่า', icon: Pizza, color: 'text-red-500' },
-    { name: 'ค่าเดินทาง', icon: Car, color: 'text-blue-600' },
-    { name: 'หนัง', icon: Film, color: 'text-purple-500' },
-    { name: 'ค่าน้ำ/ไฟ', icon: Droplet, color: 'text-cyan-500' },
-    { name: 'ปาร์ตี้', icon: Martini, color: 'text-pink-500' },
-    { name: 'ช้อปปิ้ง', icon: ShoppingBag, color: 'text-green-500' },
+    // อาหาร
+    { name: 'อาหารกลางวัน', icon: Utensils, color: 'text-orange-500', category: 'อาหาร' },
+    { name: 'อาหารเย็น', icon: Utensils, color: 'text-blue-500', category: 'อาหาร' },
+    { name: 'ร้านอาหารญี่ปุ่น', icon: Utensils, color: 'text-red-500', category: 'อาหาร' },
+    { name: 'คาเฟ่', icon: Coffee, color: 'text-amber-600', category: 'อาหาร' },
+    { name: 'พิซซ่า', icon: Pizza, color: 'text-red-500', category: 'อาหาร' },
+    { name: 'ข้าวมันไก่', icon: Utensils, color: 'text-yellow-500', category: 'อาหาร' },
+    { name: 'ส้มตำ', icon: Utensils, color: 'text-green-500', category: 'อาหาร' },
+    { name: 'ชาบู', icon: Flame, color: 'text-red-600', category: 'อาหาร' },
+    
+    // เดินทาง
+    { name: 'ค่าเดินทาง', icon: Car, color: 'text-blue-600', category: 'เดินทาง' },
+    { name: 'ค่าแท็กซี่', icon: Car, color: 'text-yellow-500', category: 'เดินทาง' },
+    { name: 'ค่าน้ำมัน', icon: Droplet, color: 'text-blue-500', category: 'เดินทาง' },
+    { name: 'ค่ารถไฟฟ้า', icon: Train, color: 'text-blue-600', category: 'เดินทาง' },
+    { name: 'แชร์เดินทางต่างจังหวัด', icon: MapPin, color: 'text-red-500', category: 'เดินทาง' },
+    
+    // บันเทิง
+    { name: 'หนัง', icon: Film, color: 'text-purple-500', category: 'บันเทิง' },
+    { name: 'คอนเสิร์ต', icon: Music, color: 'text-pink-500', category: 'บันเทิง' },
+    { name: 'เกม', icon: Film, color: 'text-indigo-500', category: 'บันเทิง' },
+    { name: 'ปาร์ตี้', icon: Martini, color: 'text-pink-500', category: 'บันเทิง' },
+    
+    // ช้อปปิ้ง
+    { name: 'ช้อปปิ้ง', icon: ShoppingBag, color: 'text-green-500', category: 'ช้อปปิ้ง' },
+    { name: 'เสื้อผ้า', icon: Shirt, color: 'text-blue-400', category: 'ช้อปปิ้ง' },
+    { name: 'ของขวัญ', icon: Heart, color: 'text-red-500', category: 'ช้อปปิ้ง' },
+    { name: 'เครื่องสำอาง', icon: Award, color: 'text-pink-400', category: 'ช้อปปิ้ง' },
+    
+    // ที่พักอาศัย
+    { name: 'ค่าน้ำ/ไฟ', icon: Droplet, color: 'text-cyan-500', category: 'ที่พักอาศัย' },
+    { name: 'ค่าเช่า', icon: Home, color: 'text-blue-600', category: 'ที่พักอาศัย' },
+    { name: 'ค่าอินเทอร์เน็ต', icon: Send, color: 'text-indigo-500', category: 'ที่พักอาศัย' },
+    
+    // อื่นๆ
+    { name: 'ค่าเล่าเรียน', icon: Book, color: 'text-amber-600', category: 'อื่นๆ' },
+    { name: 'ค่าใช้จ่ายประจำเดือน', icon: Briefcase, color: 'text-gray-600', category: 'อื่นๆ' },
+    { name: 'ค่าประกัน', icon: CreditCard, color: 'text-green-600', category: 'อื่นๆ' },
   ];
 
-  const handleSelectTemplate = (template: string) => {
+  // ใช้ useMemo เพื่อหมวดหมู่และกรองรายการ
+  const categories = useMemo(() => getBillCategories(), []);
+  
+  // กรองรายการตามคำค้นหาและหมวดหมู่
+  const filteredTemplates = useMemo(() => 
+    findBillTemplates(searchTerm, selectedCategory),
+    [searchTerm, selectedCategory]
+  );
+
+  // จัดกลุ่มตามหมวดหมู่
+  const groupedTemplates = useMemo(() => 
+    groupBillTemplatesByCategory(filteredTemplates),
+    [filteredTemplates]
+  );
+
+  const handleSelectTemplate = useCallback((template: string) => {
     dispatch({ type: 'SET_BILL_NAME', payload: template });
     setIsTemplateOpen(false);
-  };
+    saveRecentBill(template);
+  }, [dispatch, saveRecentBill]);
 
   return (
     <>
@@ -71,18 +134,18 @@ export default function BillDetailsStep({
         <div>
           <label className="block text-sm font-medium mb-1.5 text-gray-700">ชื่อบิล <span className="text-red-500">*</span></label>
           
-          {/* Template Selector */}
+          {/* Template Selector - เพิ่มการค้นหาและกรองหมวดหมู่ */}
           <div className="mb-3 relative">
             <button
               type="button"
               onClick={() => setIsTemplateOpen(!isTemplateOpen)}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-all"
+              className="w-full flex items-center justify-between px-4 py-3 rounded-md border border-gray-300 bg-white hover:bg-primary/5 text-gray-700 text-sm transition-all hover:border-primary/30"
             >
               <div className="flex items-center">
                 <Receipt size={16} className="mr-2 text-primary" />
-                <span>เลือกชื่อบิลอัตโนมัติ</span>
+                <span>{state.billName ? state.billName : 'เลือกชื่อบิลอัตโนมัติหรือกรอกเอง'}</span>
               </div>
-              <ChevronDown size={16} className={`transition-transform duration-200 ${isTemplateOpen ? 'transform rotate-180' : ''}`} />
+              <ChevronDown size={16} className={`transition-transform duration-200 ${isTemplateOpen ? 'transform rotate-180 text-primary' : ''}`} />
             </button>
             
             <AnimatePresence>
@@ -92,24 +155,100 @@ export default function BillDetailsStep({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg"
+                  className="absolute z-30 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg"
                 >
-                  <div className="grid grid-cols-2 gap-1 p-2 max-h-72 overflow-y-auto">
-                    {billTemplates.map((template, index) => {
-                      const Icon = template.icon;
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => handleSelectTemplate(template.name)}
-                          className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded-md transition-colors w-full text-left group"
-                        >
-                          <span className={`p-1.5 rounded-md mr-2 bg-gray-100 group-hover:bg-gray-200 ${template.color}`}>
-                            <Icon size={16} />
-                          </span>
-                          <span>{template.name}</span>
-                        </button>
-                      );
-                    })}
+                  {/* ช่องค้นหา */}
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="relative">
+                      <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="ค้นหาชื่อบิล..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full p-2 pl-9 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* บิลที่ใช้ล่าสุด */}
+                  {recentlyUsed.length > 0 && (
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="text-xs font-medium text-gray-500 px-2 mb-1.5">ใช้ล่าสุด</div>
+                      <div className="flex flex-wrap gap-1.5 px-1">
+                        {recentlyUsed.map((billName, index) => (
+                          <motion.button
+                            key={`recent-${index}`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSelectTemplate(billName)}
+                            className="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 rounded-full text-primary transition-colors"
+                          >
+                            {billName}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* ตัวเลือกหมวดหมู่ */}
+                  <div className="p-2 border-b border-gray-100 flex items-center overflow-x-auto no-scrollbar">
+                    <button
+                      onClick={() => setSelectedCategory(null)}
+                      className={`flex items-center px-3 py-1.5 mr-1.5 rounded-full text-xs whitespace-nowrap ${!selectedCategory ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                    >
+                      ทั้งหมด
+                    </button>
+                    {categories.map((category, index) => (
+                      <button
+                        key={`cat-${index}`}
+                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                        className={`flex items-center px-3 py-1.5 mr-1.5 rounded-full text-xs whitespace-nowrap ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                      >
+                        <Tag size={10} className="mr-1" />
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* รายการบิลแนะนำ */}
+                  <div className="max-h-72 overflow-y-auto p-2">
+                    {Object.keys(groupedTemplates).length > 0 ? (
+                      Object.entries(groupedTemplates).map(([category, items]) => (
+                        <div key={`group-${category}`} className="mb-2">
+                          <div className="text-xs font-medium text-gray-500 px-2 py-1 mb-1 bg-gray-50 rounded">{category}</div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {items.map((template, index) => {
+                              const Icon = template.icon;
+                              return (
+                                <motion.button
+                                  key={`template-${category}-${index}`}
+                                  whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.05)' }}
+                                  onClick={() => handleSelectTemplate(template.name)}
+                                  className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded-md transition-colors w-full text-left group"
+                                >
+                                  <span className={`p-1.5 rounded-md mr-2 bg-gray-100 group-hover:bg-gray-200 ${template.color}`}>
+                                    <Icon size={16} />
+                                  </span>
+                                  <span className="truncate">{template.name}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 text-sm text-gray-500">
+                        <svg className="w-8 h-8 mx-auto mb-2 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        ไม่พบรายการตามที่ค้นหา
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

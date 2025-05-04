@@ -1,9 +1,10 @@
 // นำเข้าประเภท Metadata จาก Next.js เพื่อระบุข้อมูลเมตาของหน้าเว็บ
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 // นำเข้า Font "Inter" จาก Google Fonts
 import { Inter } from "next/font/google";
 // นำเข้าไฟล์สไตล์ globals.css สำหรับกำหนดสไตล์ทั่วโลก
 import "./globals.css";
+import "./styles/shared.css"; // เพิ่มการนำเข้า styles/shared.css โดยตรง
 // นำเข้าคอมโพเนนต์ Providers สำหรับครอบคลุม Context ต่างๆ (เช่น authentication, theme, ฯลฯ)
 import Providers from './providers';
 import { FirebaseProvider } from './components/providers/FirebaseWrapper';
@@ -11,6 +12,7 @@ import { AuthProvider } from './context/AuthContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import AppShell from './components/AppShell';
 import ChatbotPopup from './components/ChatbotPopup';
+import { Open_Sans, Prompt } from 'next/font/google';
 
 // กำหนดการใช้งานฟอนต์ Inter พร้อมกำหนด subset ของตัวอักษรที่ใช้ (latin)
 const inter = Inter({ 
@@ -20,25 +22,56 @@ const inter = Inter({
   fallback: ['system-ui', 'arial', 'sans-serif'] // เพิ่ม fallback fonts
 });
 
+// Preload และกำหนดขนาด subset เพื่อลดเวลาโหลดฟอนต์
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'sans-serif'],
+  weight: ['400', '500', '600', '700'], // โหลดเฉพาะ weights ที่ใช้
+  variable: '--font-open-sans'
+});
+
+// สำหรับฟอนต์ภาษาไทย
+const prompt = Prompt({
+  weight: ['400', '500'],
+  subsets: ['thai'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-prompt'
+});
+
 // กำหนด metadata ของแอปพลิเคชัน
 export const metadata: Metadata = {
-  title: {
-    default: "BuddyPay - แชร์บิลกับเพื่อนแสนง่าย",
-    template: "%s | BuddyPay"
-  },
-  description: "แอปพลิเคชันแชร์บิลและแบ่งค่าใช้จ่ายระหว่างเพื่อน",
-  metadataBase: new URL('https://buddypay.app'), 
+  title: 'BuddyPay - แชร์บิลกับเพื่อนง่ายๆ',
+  description: 'แอปสำหรับแชร์บิลร้านอาหารและค่าใช้จ่ายอื่นๆ กับเพื่อนของคุณ แชร์อย่างเป็นธรรมไม่มีใครได้เปรียบเสียเปรียบ',
+  authors: [{ name: 'BuddyPay Team' }],
+  keywords: ['บิล', 'แชร์บิล', 'แบ่งบิล', 'อาหาร', 'คำนวณบิล'],
   icons: {
-    icon: [
-      { url: '/favicon.ico' },
-      { url: '/icon.png', type: 'image/png' },
-    ],
+    icon: '/favicon.ico',
   },
+  // เพิ่มสำหรับ PWA
+  manifest: '/manifest.json',
+  // ลดขนาด bundle
   alternates: {
-    types: {
-      'application/rss+xml': '/rss'
-    }
-  }
+    canonical: 'https://buddypay.app',
+  },
+  formatDetection: {
+    telephone: true,
+    address: false,
+    email: true,
+  },
+};
+
+// Viewport optimization
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  minimumScale: 1,
+  userScalable: true, // ให้ผู้ใช้ซูมได้เพื่อความเป็น accessibility
+  themeColor: '#4f46e5',
+  colorScheme: 'light',
 };
 
 // revalidate ทุก 24 ชม.
@@ -51,8 +84,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // ระบุภาษาเป็น "en" และใช้ suppressHydrationWarning เพื่อป้องกันข้อความ warning ในระหว่าง hydration
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th" className={`${inter.className} ${openSans.variable} ${prompt.variable}`} suppressHydrationWarning>
       <head>
         <link
           rel="preconnect"
@@ -94,8 +126,20 @@ export default function RootLayout({
             }
           }
         `}} />
+        {/* Preload fonts และ critical assets */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* Preload critical CSS */}
+        <link rel="preload" href="/styles/shared.css" as="style" />
+        
+        {/* Add DNS prefetching for external resources */}
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        
+        {/* Set viewport */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
-      <body className={inter.className}>
+      <body className="bg-gray-50">
         <Providers>
           <FirebaseProvider>
             <AuthProvider>
