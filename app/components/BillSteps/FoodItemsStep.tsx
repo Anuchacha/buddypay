@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { BillState } from '../../lib/billTypes';
 import FoodItemForm from '../../components/FoodItemForm';
 import QuickAddFoodItemsModal from '../../components/QuickAddFoodItemsModal';
+import { Plus, AlertCircle, FileText, Trash2, Info, Coffee, ShoppingBag, DollarSign } from 'lucide-react';
 
 interface FoodItemsStepProps {
   state: BillState;
@@ -21,13 +23,6 @@ export default function FoodItemsStep({
 }: FoodItemsStepProps) {
   const [quickAddName, setQuickAddName] = useState('');
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
-
-  // เปิด modal อัตโนมัติเมื่อมาถึง step นี้และยังไม่มีรายการอาหาร
-  useEffect(() => {
-    if (state.foodItems.length === 0) {
-      setIsQuickAddModalOpen(true);
-    }
-  }, []); // เรียกทำงานเพียงครั้งเดียวเมื่อ component ถูกโหลด
 
   const handleQuickAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,85 +64,120 @@ export default function FoodItemsStep({
     });
   };
 
+  // คำนวณยอดรวม
+  const calculateTotal = () => {
+    return state.foodItems.reduce((sum, item) => sum + item.price, 0);
+  };
+
   return (
     <>
-      <CardHeader className="flex flex-row items-center justify-between bg-gray-50 border-b px-6 py-4">
+      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5 border-b px-6 py-4">
         <CardTitle className="text-xl font-semibold flex items-center">
-          <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 text-sm">2</span>
-          รายการอาหาร
+          <span className="bg-primary text-white rounded-full w-7 h-7 inline-flex items-center justify-center mr-2.5 text-sm shadow-sm">2</span>
+          <span className="text-primary/90">รายการอาหาร</span>
         </CardTitle>
         <Button 
           onClick={() => setIsQuickAddModalOpen(true)} 
           size="sm" 
-          className="bg-primary hover:bg-primary/90"
+          className="bg-primary hover:bg-primary/90 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 transform duration-200"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /> 
-          </svg>
+          <ShoppingBag size={16} className="mr-1.5" />
           เพิ่มหลายรายการ
         </Button>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-5 text-sm text-blue-700">
-          <p className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            เพิ่มรายการอาหารทั้งหมดที่คุณและเพื่อนสั่ง
-          </p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-6 text-sm text-blue-700 flex items-start"
+        >
+          <Info size={18} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
+          <p>เพิ่มรายการอาหารทั้งหมดที่คุณและเพื่อนสั่ง เพื่อคำนวณการแชร์บิลที่ถูกต้อง</p>
+        </motion.div>
 
-        {/* ฟอร์มเพิ่มรายการอาหารแบบเร็ว */}
-        <form onSubmit={handleQuickAdd} className="flex items-center space-x-2 mb-5">
-          <div className="flex-1">
-            <Input
-              placeholder="ชื่ออาหาร เช่น ข้าวผัดหมู"
-              value={quickAddName}
-              onChange={(e) => setQuickAddName(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <Button type="submit" className="bg-primary hover:bg-primary/90">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            เพิ่มรายการ
-          </Button>
-        </form>
-        
         {state.foodItems.length > 0 ? (
-          <div className="space-y-4">
-            {state.foodItems.map((item) => (
-              <FoodItemForm
-                key={item.id}
-                item={item}
-                participants={state.participants}
-                splitMethod={state.splitMethod}
-                onUpdate={onUpdateFoodItem}
-                onRemove={handleRemoveFoodItem}
-              />
-            ))}
+          <div className="space-y-1">
+            <div className="grid grid-cols-12 gap-2 mb-3 text-sm font-medium text-gray-600 px-3">
+              <div className="col-span-5">รายการอาหาร</div>
+              <div className="col-span-3 text-center">ราคา (บาท)</div>
+              <div className="col-span-1 text-right"></div>
+            </div>
+            
+            <AnimatePresence>
+              {state.foodItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <FoodItemForm
+                    item={item}
+                    participants={state.participants}
+                    splitMethod={state.splitMethod}
+                    onUpdate={onUpdateFoodItem}
+                    onRemove={handleRemoveFoodItem}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {/* สรุปยอดรวม */}
+            <motion.div 
+              className="flex justify-between items-center mt-6 pt-4 border-t border-dashed border-gray-200 text-lg font-medium"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex items-center text-gray-700">
+                <DollarSign size={18} className="mr-1.5 text-primary" />
+                ยอดรวมทั้งหมด
+              </div>
+              <div className="text-xl text-primary font-semibold">
+                {calculateTotal().toLocaleString()} บาท
+              </div>
+            </motion.div>
+            
+            {/* ปุ่มเพิ่มรายการ */}
+            <motion.div 
+              className="mt-5 flex justify-center"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Button 
+                variant="outline" 
+                onClick={() => setIsQuickAddModalOpen(true)} 
+                className="border-dashed border-gray-300 hover:border-primary/70 hover:bg-primary/5 transition-all duration-200"
+              >
+                <Plus size={18} className="mr-1.5 text-primary" />
+                เพิ่มรายการอาหาร
+              </Button>
+            </motion.div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <div className="space-y-2">
-              <p className="text-muted-foreground">
+          <motion.div 
+            className="text-center py-12 px-4 bg-gray-50/50 rounded-xl border border-dashed border-gray-200"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Coffee className="h-14 w-14 mx-auto text-primary/30 mb-4" />
+            <div className="space-y-3">
+              <p className="text-gray-500 max-w-md mx-auto">
                 ยังไม่มีรายการอาหาร กดปุ่ม 'เพิ่มรายการ' เพื่อเพิ่มอาหารที่สั่ง
               </p>
               <Button 
                 onClick={() => setIsQuickAddModalOpen(true)} 
-                className="bg-primary hover:bg-primary/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 duration-200"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <Plus size={18} className="mr-1.5" />
                 เพิ่มรายการแรก
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
       </CardContent>
 

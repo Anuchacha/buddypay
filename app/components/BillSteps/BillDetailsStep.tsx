@@ -2,6 +2,9 @@ import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { BillState } from '../../lib/billTypes';
 import { CategorySelect } from '../../../CategorySelect';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, ChevronDown, FileText, Info, LucideIcon, Receipt, Utensils, Coffee, ShoppingBag, Film, Pizza, Car, Droplet, Martini } from 'lucide-react';
 
 interface BillDetailsStepProps {
   state: BillState;
@@ -12,6 +15,12 @@ interface BillDetailsStepProps {
   setNotes: (value: string) => void;
 }
 
+type BillTemplate = {
+  name: string;
+  icon: LucideIcon;
+  color: string;
+}
+
 export default function BillDetailsStep({
   state,
   dispatch,
@@ -20,32 +29,104 @@ export default function BillDetailsStep({
   notes,
   setNotes
 }: BillDetailsStepProps) {
+  const [isTemplateOpen, setIsTemplateOpen] = useState(false);
+
+  const billTemplates: BillTemplate[] = [
+    { name: 'อาหารกลางวัน', icon: Utensils, color: 'text-orange-500' },
+    { name: 'อาหารเย็น', icon: Utensils, color: 'text-blue-500' },
+    { name: 'ร้านอาหารญี่ปุ่น', icon: Utensils, color: 'text-red-500' },
+    { name: 'คาเฟ่', icon: Coffee, color: 'text-amber-600' },
+    { name: 'พิซซ่า', icon: Pizza, color: 'text-red-500' },
+    { name: 'ค่าเดินทาง', icon: Car, color: 'text-blue-600' },
+    { name: 'หนัง', icon: Film, color: 'text-purple-500' },
+    { name: 'ค่าน้ำ/ไฟ', icon: Droplet, color: 'text-cyan-500' },
+    { name: 'ปาร์ตี้', icon: Martini, color: 'text-pink-500' },
+    { name: 'ช้อปปิ้ง', icon: ShoppingBag, color: 'text-green-500' },
+  ];
+
+  const handleSelectTemplate = (template: string) => {
+    dispatch({ type: 'SET_BILL_NAME', payload: template });
+    setIsTemplateOpen(false);
+  };
+
   return (
     <>
-      <CardHeader className="bg-gray-50 border-b px-6 py-4">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b px-6 py-4">
         <CardTitle className="text-xl font-semibold flex items-center">
-          <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 text-sm">4</span>
-          ข้อมูลบิล
+          <span className="bg-primary text-white rounded-full w-7 h-7 inline-flex items-center justify-center mr-2.5 text-sm shadow-sm">4</span>
+          <span className="text-primary/90">ข้อมูลบิล</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-5 text-sm text-blue-700">
-          <p className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            ตั้งชื่อบิลและกรอกรายละเอียดเพิ่มเติม
-          </p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-6 text-sm text-blue-700 flex items-start"
+        >
+          <Info size={18} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
+          <p>ตั้งชื่อบิลและกรอกรายละเอียดเพิ่มเติม สามารถเลือกจากตัวเลือกด่านบนได้</p>
+        </motion.div>
         
         <div>
           <label className="block text-sm font-medium mb-1.5 text-gray-700">ชื่อบิล <span className="text-red-500">*</span></label>
-          <Input
-            placeholder="ชื่อบิล เช่น อาหารกลางวัน, ทานข้าวร้าน ABC"
-            value={state.billName}
-            onChange={(e) => dispatch({ type: 'SET_BILL_NAME', payload: e.target.value })}
-            className="focus:ring-2 focus:ring-primary/20"
-          />
+          
+          {/* Template Selector */}
+          <div className="mb-3 relative">
+            <button
+              type="button"
+              onClick={() => setIsTemplateOpen(!isTemplateOpen)}
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm transition-all"
+            >
+              <div className="flex items-center">
+                <Receipt size={16} className="mr-2 text-primary" />
+                <span>เลือกชื่อบิลอัตโนมัติ</span>
+              </div>
+              <ChevronDown size={16} className={`transition-transform duration-200 ${isTemplateOpen ? 'transform rotate-180' : ''}`} />
+            </button>
+            
+            <AnimatePresence>
+              {isTemplateOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg"
+                >
+                  <div className="grid grid-cols-2 gap-1 p-2 max-h-72 overflow-y-auto">
+                    {billTemplates.map((template, index) => {
+                      const Icon = template.icon;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleSelectTemplate(template.name)}
+                          className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 rounded-md transition-colors w-full text-left group"
+                        >
+                          <span className={`p-1.5 rounded-md mr-2 bg-gray-100 group-hover:bg-gray-200 ${template.color}`}>
+                            <Icon size={16} />
+                          </span>
+                          <span>{template.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
+              <FileText size={16} />
+            </span>
+            <Input
+              placeholder="ชื่อบิล เช่น อาหารกลางวัน, ทานข้าวร้าน ABC"
+              value={state.billName}
+              onChange={(e) => dispatch({ type: 'SET_BILL_NAME', payload: e.target.value })}
+              className="pl-10 focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
           <p className="text-xs text-gray-500 mt-1">ตั้งชื่อบิลให้จำง่าย เช่น "ข้าวมันไก่ตอนเที่ยง" หรือ "ร้าน ABC วันเสาร์"</p>
         </div>
         

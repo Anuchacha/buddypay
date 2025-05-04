@@ -10,6 +10,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { FirestoreBill, BillState } from '../lib/billTypes';
 import { calculateSplitMemoized as calculateSplit } from '../lib/billCalculator';
 import { FoodItem, Participant, Bill } from '../lib/schema';
+import { ParticipantGroup } from '../lib/types/participantGroup';
+import { getParticipantGroups, saveParticipantGroup as saveGroup } from '../lib/services/participantGroupService';
 
 export function useBillManagement(state: BillState, dispatch: React.Dispatch<any>) {
   const { user, isAuthenticated } = useAuth();
@@ -27,6 +29,10 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
   const [error, setError] = useState<Error | null>(null);
   const [notes, setNotes] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
+  
+  // สำหรับกลุ่มผู้เข้าร่วม
+  const [savedGroups, setSavedGroups] = useState<ParticipantGroup[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
 
   // ฟังก์ชันแสดง Toast
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'warning' = 'success') => {
@@ -77,6 +83,65 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
     }
   }, [user]);
 
+  // โหลดข้อมูลกลุ่มผู้เข้าร่วม
+  const loadParticipantGroups = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoadingGroups(true);
+    try {
+      const groups = await getParticipantGroups(user.uid);
+      setSavedGroups(groups);
+    } catch (error) {
+      console.error('Error loading participant groups:', error);
+      showToast('ไม่สามารถโหลดกลุ่มผู้เข้าร่วมได้', 'error');
+    } finally {
+      setIsLoadingGroups(false);
+    }
+  }, [user, showToast]);
+
+  // บันทึกกลุ่มผู้เข้าร่วมใหม่
+  const saveParticipantGroup = useCallback(async (name: string, description?: string) => {
+    if (!user || state.participants.length === 0) {
+      showToast('ไม่สามารถบันทึกกลุ่มได้ กรุณาเพิ่มผู้เข้าร่วมก่อน', 'error');
+      return;
+    }
+
+    try {
+      // ส่ง null แทน undefined หรือค่าว่าง
+      const sanitizedDescription = description && description.trim() !== '' ? description.trim() : null;
+      await saveGroup(user.uid, name, state.participants, sanitizedDescription);
+      showToast('บันทึกกลุ่มเรียบร้อยแล้ว', 'success');
+      loadParticipantGroups(); // โหลดกลุ่มใหม่
+    } catch (error) {
+      console.error('Error saving group:', error);
+      showToast('เกิดข้อผิดพลาดในการบันทึกกลุ่ม', 'error');
+    }
+  }, [user, state.participants, showToast, loadParticipantGroups]);
+
+  // โหลดกลุ่มผู้เข้าร่วมที่เลือก
+  const loadParticipantGroup = useCallback((groupId: string) => {
+    const group = savedGroups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    // ล้างรายชื่อเดิม
+    dispatch({ type: 'SET_PARTICIPANTS', payload: [] });
+    
+    // เพิ่มสมาชิกจากกลุ่ม
+    group.participants.forEach(participant => {
+      // สร้าง ID ใหม่สำหรับการใช้งานครั้งนี้
+      const newParticipant = {
+        ...participant,
+        id: uuidv4()
+      };
+      dispatch({ 
+        type: 'UPDATE_PARTICIPANT', 
+        payload: { ...newParticipant, isNew: true }
+      });
+    });
+    
+    showToast(`โหลดกลุ่ม ${group.name} เรียบร้อยแล้ว`, 'success');
+  }, [savedGroups, dispatch, showToast]);
+
   // ฟังก์ชันสำหรับโหลดข้อมูลเริ่มต้น
   const loadInitialData = useCallback(async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -94,12 +159,15 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
         // ถ้าไม่มีแคชหรือแคชหมดอายุ ให้ดึงข้อมูลใหม่
         fetchBills();
       }
+      
+      // โหลดข้อมูลกลุ่มผู้เข้าร่วม
+      loadParticipantGroups();
     } catch (error) {
       console.error('Error loading initial data:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
       setIsLoading(false);
     }
-  }, [dispatch, getBillsFromCache]);
+  }, [dispatch, getBillsFromCache, loadParticipantGroups]);
 
   // ฟังก์ชันดึงข้อมูลบิลแบบมี pagination
   const fetchBills = useCallback(async () => {
@@ -472,6 +540,12 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
     goToNextStep,
     goToPreviousStep,
     goToStep,
-    showToast
+    showToast,
+    // กลุ่มผู้เข้าร่วม
+    savedGroups,
+    isLoadingGroups,
+    loadParticipantGroups,
+    saveParticipantGroup,
+    loadParticipantGroup
   };
 } 

@@ -1,4 +1,4 @@
-import { BillAction, BillState } from '../lib/billTypes';
+import { BillAction, BillState, FoodItemWithFlag } from '../lib/billTypes';
 
 // สร้าง reducer function
 export function billReducer(state: BillState, action: BillAction): BillState {
@@ -22,77 +22,61 @@ export function billReducer(state: BillState, action: BillAction): BillState {
     case 'ADD_FOOD_ITEM':
       return { ...state, foodItems: [...state.foodItems, action.payload] };
     case 'UPDATE_FOOD_ITEM':
-      // ตรวจสอบว่าเป็นการเพิ่มรายการอาหารใหม่พร้อมข้อมูลหรือไม่
-      if ('isNew' in action.payload && action.payload.isNew === true) {
-        // กรณีเป็นรายการอาหารใหม่ ให้เพิ่มเข้าไปในรายการเลย
-        const { isNew, ...newFoodItem } = action.payload;
+      // ตรวจสอบว่าเป็นการเพิ่มรายการอาหารใหม่หรือไม่
+      if (action.payload.isNew) {
+        // ถ้าเป็นรายการอาหารใหม่ ให้เพิ่มลงในรายการ
+        const { isNew, ...newItem } = action.payload;
         return {
           ...state,
-          foodItems: [...state.foodItems, newFoodItem]
-        };
-      } else {
-        // กรณีเป็นการอัปเดตรายการที่มีอยู่แล้ว
-        return {
-          ...state,
-          foodItems: state.foodItems.map(item =>
-            item.id === action.payload.id ? action.payload : item
-          ),
+          foodItems: [...state.foodItems, newItem]
         };
       }
+      // อัปเดตรายการอาหารที่มีอยู่แล้ว
+      return {
+        ...state,
+        foodItems: state.foodItems.map(item =>
+          item.id === action.payload.id ? action.payload : item
+        )
+      };
     case 'REMOVE_FOOD_ITEM':
       return {
         ...state,
-        foodItems: state.foodItems.filter(item => item.id !== action.payload),
+        foodItems: state.foodItems.filter(item => item.id !== action.payload)
       };
     case 'SET_PARTICIPANTS':
       return { ...state, participants: action.payload };
     case 'ADD_PARTICIPANT':
-      return {
-        ...state,
-        participants: [...state.participants, action.payload],
-      };
+      return { ...state, participants: [...state.participants, action.payload] };
     case 'UPDATE_PARTICIPANT':
-      // ตรวจสอบว่าเป็นการเพิ่มผู้เข้าร่วมใหม่พร้อมชื่อหรือไม่
-      if ('isNew' in action.payload && action.payload.isNew === true) {
-        // กรณีเป็นผู้เข้าร่วมใหม่ ให้เพิ่มเข้าไปในรายการเลย
-        const { isNew, ...newParticipant } = action.payload;
-        
-        // ถ้าเป็นโหมดหารเท่ากัน ให้เพิ่มผู้เข้าร่วมใหม่ในทุกรายการอาหาร
-        if (state.splitMethod === 'equal' && state.foodItems.length > 0) {
-          const updatedFoodItems = state.foodItems.map(item => ({
-            ...item,
-            participants: [...item.participants, newParticipant.id]
-          }));
-          
-          return {
-            ...state,
-            participants: [...state.participants, newParticipant],
-            foodItems: updatedFoodItems
-          };
-        }
-        
+      // เช็คว่ามีการเพิ่มผู้เข้าร่วมใหม่
+      if (action.payload.isNew) {
+        // ถ้าเป็นผู้เข้าร่วมใหม่ ให้เพิ่มลงในรายการ
         return {
           ...state,
-          participants: [...state.participants, newParticipant]
-        };
-      } else {
-        // กรณีเป็นการอัปเดตผู้เข้าร่วมที่มีอยู่แล้ว
-        return {
-          ...state,
-          participants: state.participants.map(p =>
-            p.id === action.payload.id ? action.payload : p
-          ),
+          participants: [...state.participants, {
+            id: action.payload.id,
+            name: action.payload.name,
+            status: action.payload.status || 'pending',
+          }]
         };
       }
+      // อัปเดตผู้เข้าร่วมที่มีอยู่แล้ว
+      return {
+        ...state,
+        participants: state.participants.map(participant =>
+          participant.id === action.payload.id
+            ? {
+                id: participant.id,
+                name: action.payload.name,
+                status: action.payload.status || participant.status
+              }
+            : participant
+        )
+      };
     case 'REMOVE_PARTICIPANT':
       return {
         ...state,
-        participants: state.participants.filter(p => p.id !== action.payload),
-        // ลบผู้เข้าร่วมออกจากรายการอาหารทั้งหมดด้วย
-        foodItems: state.foodItems.map(item => ({
-          ...item,
-          participants: item.participants.filter(id => id !== action.payload)
-        }))
+        participants: state.participants.filter(participant => participant.id !== action.payload)
       };
     case 'SET_SPLIT_RESULTS':
       return { ...state, splitResults: action.payload };
@@ -102,6 +86,8 @@ export function billReducer(state: BillState, action: BillAction): BillState {
       return { ...state, bills: [...state.bills, ...action.payload] };
     case 'SET_TOAST':
       return { ...state, toast: action.payload };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.payload };
     case 'RESET_BILL':
       return {
         ...state,
@@ -114,13 +100,26 @@ export function billReducer(state: BillState, action: BillAction): BillState {
         categoryId: 'food',
         foodItems: [],
         participants: [],
-        splitResults: [],
-        // คงค่าบิลและการแสดง toast ไว้
-        bills: state.bills,
-        toast: state.toast
+        splitResults: []
       };
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
+    // กลุ่มผู้เข้าร่วม
+    case 'SET_PARTICIPANT_GROUPS':
+      return { ...state, participantGroups: action.payload };
+    case 'ADD_PARTICIPANT_GROUP':
+      return { 
+        ...state, 
+        participantGroups: [
+          ...(state.participantGroups || []), 
+          action.payload
+        ] 
+      };
+    case 'REMOVE_PARTICIPANT_GROUP':
+      return {
+        ...state,
+        participantGroups: (state.participantGroups || []).filter(
+          group => group.id !== action.payload
+        )
+      };
     default:
       return state;
   }

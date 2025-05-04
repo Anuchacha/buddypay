@@ -49,7 +49,13 @@ export default function ShareBillPage() {
     goToNextStep,
     goToPreviousStep,
     goToStep,
-    showToast
+    showToast,
+    // กลุ่มผู้เข้าร่วม
+    savedGroups,
+    isLoadingGroups,
+    loadParticipantGroups,
+    saveParticipantGroup,
+    loadParticipantGroup
   } = useBillManagement(state, dispatch);
 
   // useEffect สำหรับการโหลดข้อมูลเริ่มต้น
@@ -188,6 +194,9 @@ export default function ShareBillPage() {
                   addParticipant={addParticipant}
                   handleRemoveParticipant={handleRemoveParticipant}
                   onUpdateParticipant={(updated) => dispatch({ type: 'UPDATE_PARTICIPANT', payload: updated })}
+                  savedGroups={savedGroups}
+                  onSaveGroup={saveParticipantGroup}
+                  onSelectGroup={loadParticipantGroup}
                 />
               )}
 

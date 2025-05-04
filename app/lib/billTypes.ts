@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { Bill, FoodItem, Participant } from './schema';
 import { SplitResult } from './billCalculator';
+import { ParticipantGroup } from './types/participantGroup';
 
 // ขยาย Type Bill สำหรับข้อมูลที่มาจาก Firestore ซึ่งมี id เพิ่มเติม
 export interface FirestoreBill extends Bill {
@@ -26,10 +27,16 @@ export interface BillState {
     type: 'success' | 'error' | 'warning';
   };
   isLoading: boolean;
+  participantGroups?: ParticipantGroup[];
 }
 
 // ขยาย type Participant เพื่อรองรับการส่งผู้เข้าร่วมใหม่
 export type ParticipantWithFlag = Participant & {
+  isNew?: boolean;
+}
+
+// ขยาย type FoodItem เพื่อรองรับการส่งรายการอาหารใหม่
+export type FoodItemWithFlag = FoodItem & {
   isNew?: boolean;
 }
 
@@ -44,7 +51,7 @@ export type BillAction =
   | { type: 'SET_CATEGORY_ID'; payload: string }
   | { type: 'SET_FOOD_ITEMS'; payload: FoodItem[] }
   | { type: 'ADD_FOOD_ITEM'; payload: FoodItem }
-  | { type: 'UPDATE_FOOD_ITEM'; payload: FoodItem }
+  | { type: 'UPDATE_FOOD_ITEM'; payload: FoodItemWithFlag }
   | { type: 'REMOVE_FOOD_ITEM'; payload: string }
   | { type: 'SET_PARTICIPANTS'; payload: Participant[] }
   | { type: 'ADD_PARTICIPANT'; payload: Participant }
@@ -55,7 +62,10 @@ export type BillAction =
   | { type: 'ADD_BILLS'; payload: FirestoreBill[] }
   | { type: 'SET_TOAST'; payload: { show: boolean; message: string; type: 'success' | 'error' | 'warning' } }
   | { type: 'RESET_BILL' }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_PARTICIPANT_GROUPS'; payload: ParticipantGroup[] }
+  | { type: 'ADD_PARTICIPANT_GROUP'; payload: ParticipantGroup }
+  | { type: 'REMOVE_PARTICIPANT_GROUP'; payload: string };
 
 // สร้าง initial state
 export const initialState: BillState = {
@@ -71,7 +81,8 @@ export const initialState: BillState = {
   splitResults: [],
   toast: { show: false, message: '', type: 'success' },
   bills: [],
-  isLoading: false
+  isLoading: false,
+  participantGroups: []
 };
 
 // กำหนด steps ในการหารบิล

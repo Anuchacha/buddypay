@@ -4,14 +4,29 @@ import { useState, useEffect, useRef } from 'react';
 import { SplitResult } from '../lib/billCalculator';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
-import { Printer, Download, Loader2 } from 'lucide-react';
-import styles from './BillSummary.module.css';
+import { 
+  Printer, 
+  Download, 
+  Loader2, 
+  User, 
+  Users, 
+  Receipt, 
+  CreditCard, 
+  DollarSign, 
+  AlertCircle, 
+  Calendar, 
+  FileText,
+  Coffee,
+  Utensils
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // โหลด QRCode component แบบ dynamic เพื่อป้องกันปัญหา SSR
 const QRCode = dynamic(() => import('react-qr-code'), { 
   ssr: false,
-  loading: () => <div className="qr-loading">กำลังโหลด QR Code...</div>
+  loading: () => <div className="qr-loading flex justify-center items-center h-32 w-32 bg-gray-100 rounded-lg mx-auto">
+    <Loader2 className="animate-spin text-primary h-8 w-8" />
+  </div>
 });
 
 // กำหนดประเภทข้อมูลให้ชัดเจน
@@ -69,7 +84,7 @@ export default function BillSummary({
   splitResults,
   results,
   totalAmount: propTotalAmount,
-  billTitle = "LASTBUDDYPAY",
+  billTitle = "BUDDYPAY",
   billDate = new Date(),
   billId = "0001",
   ownerName = "",
@@ -113,7 +128,7 @@ export default function BillSummary({
   const calculatedTotalEqual = results?.reduce((sum, result) => sum + (result?.amount || 0), 0) || 0;
   const totalEqual = propTotalAmount !== undefined ? propTotalAmount : calculatedTotalEqual;
   
-  const formattedDate = format(billDate, 'EEEE, MMMM d, yyyy', { locale: th }).toUpperCase();
+  const formattedDate = format(billDate, 'd MMMM yyyy', { locale: th });
   
   // ใช้แค่ results หรือ splitResults อันใดอันหนึ่ง โดยจัดลำดับความสำคัญ
   const finalResults = results || splitResults || [];
@@ -164,7 +179,7 @@ export default function BillSummary({
     
     return {
       id: (index + 1).toString().padStart(2, '0'),
-      name: item.participant.name.toUpperCase(),
+      name: item.participant.name,
       amount: Math.round(item.amount),
       discount: extendedItem.discount || 0,
       vat: extendedItem.vat || 0,
@@ -210,11 +225,12 @@ export default function BillSummary({
   };
 
   return (
-    <div className="receipt-container">
-      <div className="receipt-actions">
+    <div className="max-w-2xl mx-auto p-4 font-sans">
+      {/* ปุ่มดำเนินการ */}
+      <div className="flex justify-end gap-3 mb-4 print:hidden">
         <button 
           onClick={printReceipt} 
-          className="receipt-action-button"
+          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
           aria-label="พิมพ์ใบเสร็จ"
         >
           <Printer size={16} />
@@ -223,7 +239,7 @@ export default function BillSummary({
         
         <button 
           onClick={downloadAsImage} 
-          className="receipt-action-button"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
           disabled={isDownloading || isModuleLoading || !!moduleError}
           aria-label="ดาวน์โหลดใบเสร็จเป็นรูปภาพ"
         >
@@ -235,346 +251,300 @@ export default function BillSummary({
           ) : (
             <>
               <Download size={16} />
-              <span>ดาวน์โหลด</span>
+              <span>บันทึกเป็นรูปภาพ</span>
             </>
           )}
         </button>
-        
-        {moduleError && (
-          <div className="module-error">
-            <p>{moduleError}</p>
-          </div>
-        )}
       </div>
       
-      <div className="receipt" ref={receiptRef}>
-        <div className="receipt-header">
-          <h1>{billTitle}</h1>
-          <p>LAST MONTH</p>
-          <p>ORDER #{billId}{ownerName ? ` FOR ${ownerName}` : ''}</p>
-          <p>{formattedDate}</p>
-          <div className="receipt-divider">------------------------------</div>
+      {/* แสดงข้อผิดพลาด */}
+      {moduleError && (
+        <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
+          <p className="flex items-center">
+            <AlertCircle size={16} className="mr-2" />
+            {moduleError}
+          </p>
         </div>
-        
-        {/* แสดงรายการอาหาร */}
-        <div className="receipt-items">
-          <div className="receipt-section-title">รายการอาหาร</div>
-          <div className="receipt-column-headers">
-            <span>ITEM</span>
-            <span>QTY</span>
-            <span>AMT</span>
+      )}
+      
+      {/* สรุปบิล */}
+      <div 
+        ref={receiptRef} 
+        className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none"
+      >
+        {/* ส่วนหัว - ข้อมูลบิล */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-5 text-white">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-bold">{billTitle}</h1>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center">
+              <Calendar className="w-4 h-4 mr-2" />
+              {formattedDate}
+            </div>
           </div>
-          <div className="receipt-divider">------------------------------</div>
           
-          {groupedFoodItems.length > 0 ? (
-            groupedFoodItems.map((item, index) => (
-              <div key={`food-${index}`} className="receipt-item">
-                <span className="receipt-item-name">
-                  {item.name}
-                </span>
-                <span className="receipt-item-qty">
-                  {item.count > 1 ? `x${item.count}` : '-'}
-                </span>
-                <span className="receipt-item-amount">{Math.round(item.amount)}</span>
+          {/* ข้อมูลผู้สั่ง */}
+          <div className="mt-3 flex items-center text-sm bg-white/10 p-2 rounded-lg">
+            <User className="w-4 h-4 mr-2" />
+            <span>ผู้สั่งอาหาร: <strong>{ownerName || "ไม่ระบุ"}</strong></span>
+          </div>
+          
+          {/* ข้อมูลสรุป */}
+          <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+            <div className="bg-white/10 p-3 rounded-lg">
+              <div className="flex justify-center mb-1">
+                <Utensils className="w-5 h-5" />
               </div>
-            ))
-          ) : (
-            <div className="receipt-item">
-              <span className="receipt-item-name">ไม่มีรายการ</span>
-              <span className="receipt-item-qty">-</span>
-              <span className="receipt-item-amount">-</span>
+              <div className="text-xs opacity-80">รายการอาหาร</div>
+              <div className="text-xl font-bold mt-1">{groupedFoodItems.length}</div>
             </div>
-          )}
-        </div>
-        
-        <div className="receipt-divider">------------------------------</div>
-        
-        {/* แสดงรายละเอียดเพิ่มเติม */}
-        <div className="receipt-details">
-          {vatAmount > 0 && (
-            <div className="receipt-detail-item">
-              <span>VAT</span>
-              <span>{Math.round(vatAmount)}</span>
+            
+            <div className="bg-white/10 p-3 rounded-lg">
+              <div className="flex justify-center mb-1">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="text-xs opacity-80">ผู้ร่วมจ่าย</div>
+              <div className="text-xl font-bold mt-1">{participantCount}</div>
             </div>
-          )}
-          {serviceChargeAmount > 0 && (
-            <div className="receipt-detail-item">
-              <span>ค่าบริการ</span>
-              <span>{Math.round(serviceChargeAmount)}</span>
+            
+            <div className="bg-white/10 p-3 rounded-lg">
+              <div className="flex justify-center mb-1">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="text-xs opacity-80">ยอดรวม</div>
+              <div className="text-xl font-bold mt-1">{Math.round(totalAmount)} ฿</div>
             </div>
-          )}
-          {(discount || 0) > 0 && (
-            <div className="receipt-detail-item">
-              <span>ส่วนลด</span>
-              <span>{Math.round(discount || 0)}</span>
-            </div>
-          )}
-          <div className="receipt-detail-item total">
-            <span>ยอดรวมต้องชำระ</span>
-            <span>{Math.round(totalAmount)}</span>
           </div>
         </div>
         
-        <div className="receipt-divider">------------------------------</div>
-        
-        {/* แสดงรายชื่อผู้ร่วมจ่าย */}
-        <div className="receipt-participants">
-          <div className="receipt-section-title">รายชื่อผู้ร่วมจ่าย</div>
-          <div className="receipt-divider">------------------------------</div>
-          
-          {receiptParticipants.map((participant) => (
-            <div key={participant.id} className="receipt-participant-item">
-              <div className="receipt-participant-name">{participant.name}</div>
-              <div className="receipt-participant-amount">{participant.amount}</div>
+        {/* ส่วนเนื้อหา */}
+        <div className="p-5">
+          {/* รายการอาหาร */}
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+              <Utensils className="w-5 h-5 mr-2 text-blue-500" />
+              รายการอาหารทั้งหมด
+            </h2>
+            
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              {/* หัวตาราง */}
+              <div className="grid grid-cols-12 gap-2 p-3 border-b bg-gray-100 text-sm font-medium text-gray-600">
+                <div className="col-span-7">รายการ</div>
+                <div className="col-span-2 text-center">จำนวน</div>
+                <div className="col-span-3 text-right">ราคา (บาท)</div>
+              </div>
+              
+              {/* รายการอาหาร */}
+              <div className="divide-y divide-gray-200">
+                {groupedFoodItems.length > 0 ? (
+                  groupedFoodItems.map((item, index) => (
+                    <div key={`food-${index}`} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-blue-50/50 transition-colors">
+                      <div className="col-span-7 font-medium text-gray-800">{item.name}</div>
+                      <div className="col-span-2 text-center text-gray-600">
+                        {item.count > 1 ? `${item.count} จาน` : '1 จาน'}
+                      </div>
+                      <div className="col-span-3 text-right font-semibold text-gray-800">
+                        {Math.round(item.amount)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    ไม่มีรายการอาหาร
+                  </div>
+                )}
+              </div>
+              
+              {/* รายละเอียดเพิ่มเติม */}
+              <div className="border-t border-gray-200 divide-y divide-gray-200">
+                {vatAmount > 0 && (
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
+                    <div className="col-span-9 text-gray-600 text-sm">ภาษีมูลค่าเพิ่ม {vat}%</div>
+                    <div className="col-span-3 text-right font-medium text-gray-700">
+                      {Math.round(vatAmount)}
+                    </div>
+                  </div>
+                )}
+                
+                {serviceChargeAmount > 0 && (
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
+                    <div className="col-span-9 text-gray-600 text-sm">ค่าบริการ {serviceCharge}%</div>
+                    <div className="col-span-3 text-right font-medium text-gray-700">
+                      {Math.round(serviceChargeAmount)}
+                    </div>
+                  </div>
+                )}
+                
+                {(discount || 0) > 0 && (
+                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
+                    <div className="col-span-9 text-gray-600 text-sm">ส่วนลด</div>
+                    <div className="col-span-3 text-right font-medium text-red-600">
+                      -{Math.round(discount || 0)}
+                    </div>
+                  </div>
+                )}
+                
+                {/* ยอดรวม */}
+                <div className="grid grid-cols-12 gap-2 p-3 bg-blue-50 items-center">
+                  <div className="col-span-9 font-semibold text-blue-800">ยอดรวมทั้งสิ้น</div>
+                  <div className="col-span-3 text-right font-bold text-blue-800 text-lg">
+                    {Math.round(totalAmount)}
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-        
-        <div className="receipt-divider">------------------------------</div>
-        <div className="receipt-summary">
-          <p>จำนวนรายการ: {groupedFoodItems.length}</p>
-          <p>จำนวนผู้ร่วมจ่าย: {participantCount}</p>
-          {totalAmount > 0 && <p>ยอดรวมต้องชำระ: {Math.round(totalAmount)}</p>}
-          {receiptParticipants.some(p => p.vat > 0) && (
-            <p>VAT: {receiptParticipants.reduce((sum, p) => sum + (p.vat || 0), 0)}</p>
-          )}
-          {receiptParticipants.some(p => p.discount > 0) && (
-            <p>ส่วนลด: {receiptParticipants.reduce((sum, p) => sum + (p.discount || 0), 0)}</p>
-          )}
-        </div>
-        
-        {/* แสดง QR code และข้อมูลการชำระเงิน */}
-        <div className="receipt-payment">
+          </div>
+          
+          {/* ผู้ร่วมจ่าย */}
+          <div className="mb-6">
+            <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+              <Users className="w-5 h-5 mr-2 text-blue-500" />
+              แบ่งชำระค่าอาหาร
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {receiptParticipants.map((participant) => (
+                <div 
+                  key={participant.id}
+                  className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  {/* ข้อมูลรายบุคคล */}
+                  <div className="p-3 border-b bg-gray-50 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className={`w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold ${participant.name === ownerName ? 'bg-green-100 text-green-600' : ''}`}>
+                        {participant.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="ml-2 font-medium text-gray-800">{participant.name}</span>
+                    </div>
+                    
+                    {participant.name === ownerName && (
+                      <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                        ผู้สั่ง
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* ส่วนแบ่ง */}
+                  <div className="p-4 text-center">
+                    <div className="text-sm text-gray-500 mb-1">ส่วนแบ่งที่ต้องชำระ</div>
+                    <div className="text-2xl font-bold text-blue-600">{participant.amount} ฿</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* วิธีการชำระเงิน */}
           {(qrPayload || qrCodeUrl) && (
-            <div className="receipt-qrcode">
-              <p className="text-center text-sm mb-2">สแกนเพื่อชำระเงิน</p>
-              <div className="flex justify-center mb-2">
-                {qrPayload ? (
-                  <QRCode
-                    value={qrPayload}
-                    size={150}
-                    level="M"
-                    className="qr-image"
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                  />
-                ) : qrCodeUrl ? (
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="QR Code Payment" 
-                    className="qr-image"
-                    width={150}
-                    height={150}
-                  />
-                ) : null}
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                <CreditCard className="w-5 h-5 mr-2 text-blue-500" />
+                วิธีการชำระเงิน
+              </h2>
+              
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 flex flex-col md:flex-row items-center justify-center">
+                {/* QR Code */}
+                <div className="md:mr-6 mb-4 md:mb-0">
+                  <p className="text-center mb-2 text-sm font-medium text-gray-700">สแกนเพื่อชำระเงิน</p>
+                  <div className="bg-white p-2 rounded-lg shadow-sm inline-block">
+                    {qrPayload ? (
+                      <QRCode
+                        value={qrPayload}
+                        size={150}
+                        level="M"
+                        className="mx-auto"
+                      />
+                    ) : qrCodeUrl ? (
+                      <img 
+                        src={qrCodeUrl} 
+                        alt="QR Code Payment" 
+                        className="mx-auto"
+                        width={150}
+                        height={150}
+                      />
+                    ) : null}
+                  </div>
+                </div>
+                
+                {/* รายละเอียด */}
+                <div className="text-center md:text-left">
+                  {promptPayId && (
+                    <div className="mb-2">
+                      <div className="text-sm text-gray-600 mb-1">พร้อมเพย์:</div>
+                      <div className="font-semibold text-gray-800">{promptPayId}</div>
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-red-600 bg-red-50 p-2 rounded-lg mt-3 flex items-start">
+                    <AlertCircle className="w-4 h-4 mr-1 flex-shrink-0 mt-0.5" />
+                    <span>กรุณาตรวจสอบชื่อและเลขบัญชีก่อนโอนเงิน</span>
+                  </div>
+                </div>
               </div>
-              {promptPayId && (
-                <>
-                  <p className="text-center text-xs mb-2">พร้อมเพย์: {promptPayId}</p>
-                  <p className="text-center text-xs mb-2 payment-warning">⚠️ กรุณาตรวจสอบชื่อและเลขบัญชีก่อนโอนเงิน</p>
-                </>
-              )}
             </div>
           )}
+          
+          {/* โน๊ต */}
+          {notes && (
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                <FileText className="w-5 h-5 mr-2 text-blue-500" />
+                โน๊ต
+              </h2>
+              
+              <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-4">
+                <div className="text-gray-700 text-sm whitespace-pre-wrap">{notes}</div>
+              </div>
+            </div>
+          )}
+          
+          {/* สรุปรวม */}
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 mt-6">
+            <h3 className="font-semibold text-blue-800 mb-2 flex items-center text-sm">
+              <Receipt className="w-4 h-4 mr-2" />
+              สรุปการคำนวณ
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="text-gray-600">จำนวนรายการอาหาร:</div>
+              <div className="text-gray-800 font-medium">{groupedFoodItems.length} รายการ</div>
+              
+              <div className="text-gray-600">จำนวนผู้ร่วมจ่าย:</div>
+              <div className="text-gray-800 font-medium">{participantCount} คน</div>
+              
+              <div className="text-gray-600">ยอดรวมทั้งสิ้น:</div>
+              <div className="text-gray-800 font-medium">{Math.round(totalAmount)} บาท</div>
+              
+              <div className="text-gray-600">ค่าเฉลี่ยต่อคน:</div>
+              <div className="text-gray-800 font-medium">
+                {participantCount > 0 ? Math.round(totalAmount / participantCount) : 0} บาท
+              </div>
+            </div>
+          </div>
         </div>
         
-        {notes && (
-          <div className="receipt-notes">
-            <div className="receipt-section-title note-title">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="note-icon"><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path></svg>
-              โน๊ต
-            </div>
-            <div className="receipt-note-content">{notes}</div>
-          </div>
-        )}
-        
-        <div className="receipt-footer">
-          <p>THANK YOU FOR VISITING!</p>
-          <div className="receipt-barcode">|||||||||||||||||||||||||||||||</div>
-          <p>lastbuddypay.app</p>
+        {/* ฟุตเตอร์ */}
+        <div className="p-4 border-t text-center text-gray-500 text-sm bg-gray-50">
+          <p>ขอบคุณที่ใช้บริการ</p>
+          <p className="text-xs mt-1">สร้างด้วย BUDDYPAY</p>
         </div>
       </div>
       
-      <style jsx>{`
-        .receipt-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 20px;
-        }
-        
-        .receipt-actions {
-          display: flex;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-        
-        .receipt-action-button {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          padding: 8px 12px;
-          background: #f0f0f0;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-          transition: background 0.2s;
-        }
-        
-        .receipt-action-button:hover {
-          background: #e0e0e0;
-        }
-        
-        .receipt {
-          font-family: 'Courier New', monospace;
-          width: 300px;
-          padding: 20px;
-          background-color: white;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-          position: relative;
-          overflow: hidden;
-          text-transform: uppercase;
-          font-weight: bold;
-          transition: transform 0.3s ease;
-        }
-        
-        .receipt::before {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.05;
-          pointer-events: none;
-        }
-        
-        .receipt-header {
-          text-align: center;
-          margin-bottom: 15px;
-        }
-        
-        .receipt-header h1 {
-          font-size: 22px;
-          margin: 0 0 5px 0;
-        }
-        
-        .receipt-header p {
-          margin: 5px 0;
-          font-size: 12px;
-        }
-        
-        .receipt-divider {
-          margin: 5px 0;
-          opacity: 0.8;
-          font-size: 14px;
-        }
-        
-        .receipt-column-headers {
-          display: grid;
-          grid-template-columns: 1fr 60px 80px;
-          font-size: 12px;
-          margin-bottom: 5px;
-        }
-        
-        .receipt-item {
-          display: grid;
-          grid-template-columns: 1fr 60px 80px;
-          margin: 8px 0;
-          font-size: 12px;
-        }
-        
-        .receipt-item-details {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .receipt-item-name {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          padding-right: 5px;
-        }
-        
-        .receipt-item-qty {
-          text-align: center;
-          color: #666;
-        }
-        
-        .receipt-item-amount {
-          text-align: right;
-          font-weight: bold;
-        }
-        
-        .receipt-summary {
-          margin: 10px 0;
-          font-size: 12px;
-        }
-        
-        .receipt-payment {
-          margin: 15px 0;
-          font-size: 12px;
-        }
-        
-        .receipt-footer {
-          text-align: center;
-          margin-top: 15px;
-          font-size: 12px;
-        }
-        
-        .receipt-barcode {
-          margin: 10px 0;
-          letter-spacing: -2px;
-          font-size: 16px;
-        }
-        
-        p {
-          margin: 5px 0;
-        }
-        
+      {/* สไตล์สำหรับการพิมพ์ */}
+      <style jsx global>{`
         @media print {
-          .receipt-actions {
-            display: none;
-          }
-          
-          .receipt {
-            box-shadow: none;
+          body {
+            background: white;
+            margin: 0;
             padding: 0;
           }
           
-          body {
-            background: white;
+          .print\\:hidden {
+            display: none !important;
           }
-        }
-        
-        @media (max-width: 480px) {
-          .receipt {
-            width: 100%;
-            max-width: 300px;
+          
+          .print\\:shadow-none {
+            box-shadow: none !important;
           }
-        }
-        
-        .receipt:hover {
-          transform: translateY(-5px);
-        }
-        
-        .module-error {
-          color: #e53e3e;
-          margin-top: 8px;
-          font-size: 14px;
-          text-align: center;
-        }
-        
-        .receipt-action-button:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          background: #f0f0f0;
-        }
-        
-        .animate-spin {
-          animation: spin 1s linear infinite;
         }
         
         @keyframes spin {
@@ -586,95 +556,8 @@ export default function BillSummary({
           }
         }
         
-        .receipt-section-title {
-          text-align: center;
-          font-weight: bold;
-          margin: 10px 0;
-          font-size: 14px;
-        }
-        
-        .receipt-participant-item {
-          display: flex;
-          justify-content: space-between;
-          margin: 8px 0;
-          font-size: 12px;
-        }
-        
-        .receipt-participant-name {
-          font-weight: bold;
-        }
-        
-        .receipt-participant-amount {
-          font-weight: bold;
-        }
-        
-        .receipt-qrcode {
-          margin: 15px auto;
-          padding: 15px;
-          border: 1px dashed #ccc;
-          border-radius: 8px;
-          max-width: 200px;
-          background-color: #fcfcfc;
-        }
-        
-        .qr-image {
-          border: 3px solid white;
-          border-radius: 5px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .receipt-status {
-          margin: 10px 0;
-          padding: 5px;
-          background: #e8f5e9;
-          border: 1px solid #a5d6a7;
-          border-radius: 4px;
-          color: #2e7d32;
-          text-align: center;
-        }
-        
-        .receipt-notes {
-          margin: 15px 0;
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          padding: 10px;
-          background-color: #fffdf4;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        
-        .note-title {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          color: #555;
-          border-bottom: 1px dashed #ddd;
-          padding-bottom: 8px;
-          margin-bottom: 8px;
-        }
-        
-        .note-icon {
-          margin-right: 4px;
-          flex-shrink: 0;
-        }
-        
-        .receipt-note-content {
-          font-size: 11px;
-          line-height: 1.4;
-          word-break: break-word;
-          white-space: pre-wrap;
-          color: #333;
-          text-align: left;
-          padding: 4px 0;
-        }
-        
-        .payment-warning {
-          color: #d32f2f;
-          font-weight: bold;
-          margin-top: 5px;
-          background-color: #ffebee;
-          border-radius: 4px;
-          padding: 4px;
+        .animate-spin {
+          animation: spin 1s linear infinite;
         }
       `}</style>
     </div>
