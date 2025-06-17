@@ -1,7 +1,7 @@
 import { FirebaseApp, getApp, initializeApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -17,8 +17,7 @@ const firebaseConfig = {
 // คืนค่า Firebase app ที่มีอยู่แล้ว หรือสร้างใหม่
 let firebaseApp: FirebaseApp;
 let firebaseAuth: Auth;
-let firestoreDb: Firestore;
-let firebaseStorage: FirebaseStorage;
+
 
 try {
   firebaseApp = getApp();

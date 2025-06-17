@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Lock, Bell, Globe, Shield, Users, Database } from 'lucide-react';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { Save, Bell, Globe, Shield } from 'lucide-react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { useAuth } from '@/app/context/AuthContext';
 
@@ -110,8 +110,6 @@ export default function SettingsPanel() {
         updatedBy: user.email || 'unknown',
       };
       
-      const csrfToken = getCsrfToken(); // ฟังก์ชันที่คุณต้องสร้างเพื่อดึง CSRF token
-      
       // บันทึกการตั้งค่า
       await setDoc(doc(db, 'settings', 'appSettings'), settingsData, { merge: true });
       
@@ -135,10 +133,7 @@ export default function SettingsPanel() {
     }
   };
 
-  const getCsrfToken = () => {
-    // ฟังก์ชันที่ใช้ดึง CSRF token
-    return 'your_csrf_token'; // เปลี่ยนเป็นวิธีการดึง token ที่ถูกต้อง
-  };
+
 
   if (loading) {
     return (

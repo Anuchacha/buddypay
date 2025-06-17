@@ -1,49 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+
 import { BillState } from '../../lib/billTypes';
 import FoodItemForm from '../../components/FoodItemForm';
 import QuickAddFoodItemsModal from '../../components/QuickAddFoodItemsModal';
-import { Plus, AlertCircle, FileText, Trash2, Info, Coffee, ShoppingBag, DollarSign, Receipt, Calculator, ChevronRight } from 'lucide-react';
+import { Plus, Info, Coffee, ShoppingBag, DollarSign, Receipt, Calculator, ChevronRight } from 'lucide-react';
 
 interface FoodItemsStepProps {
   state: BillState;
-  addFoodItem: () => void;
   handleRemoveFoodItem: (id: string) => void;
   onUpdateFoodItem: (updated: any) => void;
 }
 
 export default function FoodItemsStep({
   state,
-  addFoodItem,
   handleRemoveFoodItem,
   onUpdateFoodItem
 }: FoodItemsStepProps) {
-  const [quickAddName, setQuickAddName] = useState('');
+
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
-  const handleQuickAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (quickAddName.trim()) {
-      // เพิ่มรายการอาหารใหม่
-      addFoodItem();
-      
-      // อัปเดตชื่อของรายการอาหารที่เพิ่งเพิ่ม
-      if (state.foodItems.length > 0) {
-        const latestItem = state.foodItems[state.foodItems.length - 1];
-        onUpdateFoodItem({
-          ...latestItem,
-          name: quickAddName.trim()
-        });
-      }
-      
-      // ล้างฟอร์ม
-      setQuickAddName('');
-    }
-  };
+
 
   // ฟังก์ชันเพิ่มรายการอาหารผ่าน modal
   const handleQuickAddFromModal = (name: string, price: number) => {

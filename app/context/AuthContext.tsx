@@ -3,14 +3,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { 
   User, 
-  onAuthStateChanged,
-  UserCredential
+  onAuthStateChanged
 } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useFirebase } from '../components/providers/FirebaseWrapper';
 import { getErrorMessage, logErrorToAnalytics } from '../lib/errorMessages';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+
 import Cookies from 'js-cookie';
 import { useToast } from './ToastContext';
 

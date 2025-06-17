@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +16,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     email: '',
     password: ''
   });
-  const router = useRouter();
+
   const { login, loginWithGoogle, error, setError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 

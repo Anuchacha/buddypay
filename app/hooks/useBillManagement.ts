@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { collection, addDoc, query, orderBy, limit, startAfter, doc, updateDoc, onSnapshot, getDocs, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, limit, startAfter, onSnapshot, getDocs, where, Timestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -24,7 +24,7 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
   const [qrPayload, setQrPayload] = useState('');
   const [lastVisible, setLastVisible] = useState<any>(null);
   const [hasMore, setHasMore] = useState(true);
-  const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(false);
+  const [isRealTimeEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [notes, setNotes] = useState('');
@@ -67,7 +67,7 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
       const cached = await localforage.getItem(`bills_${user.uid}`);
       if (!cached) return null;
       
-      const { timestamp, data, expiry } = cached as any;
+      const { data, expiry } = cached as any;
       
       // ตรวจสอบการหมดอายุของแคช
       if (Date.now() > expiry) {
@@ -107,8 +107,8 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
     }
 
     try {
-      // ส่ง null แทน undefined หรือค่าว่าง
-      const sanitizedDescription = description && description.trim() !== '' ? description.trim() : null;
+      // ส่งค่าเป็น undefined แทน null เพื่อให้เข้ากับ type definition
+      const sanitizedDescription = description && description.trim() !== '' ? description.trim() : undefined;
       await saveGroup(user.uid, name, state.participants, sanitizedDescription);
       showToast('บันทึกกลุ่มเรียบร้อยแล้ว', 'success');
       loadParticipantGroups(); // โหลดกลุ่มใหม่
@@ -221,7 +221,7 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
           paymentMethod: data.paymentMethod || '',
           createdAt: data.createdAt?.toDate?.() || new Date(),
           updatedAt: data.updatedAt?.toDate?.() || null,
-        } as FirestoreBill;
+        } as unknown as FirestoreBill;
       });
       
       // บันทึกลงแคช

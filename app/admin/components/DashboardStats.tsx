@@ -1,29 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { CreditCard, User, Clock, TrendingUp, ArrowUpRight, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CreditCard, User, Clock, TrendingUp, Calendar } from 'lucide-react';
 import { collection, query, getDocs, where, Timestamp, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { th } from 'date-fns/locale';
 
-interface StatsData {
-  totalBills: number;
-  totalUsers: number;
-  pendingBills: number;
-  totalAmount: number;
-  recentPayments: {
-    id: string;
-    title: string;
-    amount: number;
-    date: string;
-    owner: string;
-  }[];
-  monthlyStats: {
-    month: string;
-    amount: number;
-  }[];
-}
+
 
 // กำหนดประเภทข้อมูลสำหรับ monthlyStats
 interface MonthlyStats {

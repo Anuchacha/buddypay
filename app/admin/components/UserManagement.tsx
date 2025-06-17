@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, UserPlus, Filter, Trash, Ban, CheckCircle } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, query, orderBy, where, serverTimestamp, setDoc } from 'firebase/firestore';
+import { Search, MoreHorizontal, Filter, Trash, Ban, CheckCircle } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -23,16 +23,9 @@ interface User {
 }
 
 // อินเตอร์เฟซสำหรับ currentUser
-interface AdminUser {
-  email: string | null;
-  role: string; 
-  displayName?: string;
-}
 
-// เพิ่มฟังก์ชัน type guard เพื่อตรวจสอบว่า user เป็น AdminUser หรือไม่
-function isAdminUser(user: any): user is AdminUser {
-  return user && typeof user === 'object' && 'role' in user && user.role === 'admin';
-}
+
+
 
 export default function UserManagement() {
   const { user: currentUser, userRole } = useAuth();

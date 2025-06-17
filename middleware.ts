@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from './app/lib/firebase';
+
 
 export async function middleware(req: NextRequest) {
   // เส้นทางทั้งหมดที่ต้องการการตรวจสอบสิทธิ์

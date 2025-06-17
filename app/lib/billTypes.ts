@@ -1,4 +1,4 @@
-import { Timestamp } from 'firebase/firestore';
+
 import { Bill, FoodItem, Participant } from './schema';
 import { SplitResult } from './billCalculator';
 import { ParticipantGroup } from './types/participantGroup';

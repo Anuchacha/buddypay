@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CATEGORIES, Category } from '@/app/lib/categories';
+import { CATEGORIES } from '@/app/lib/categories';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/app/lib/utils';
 

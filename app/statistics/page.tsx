@@ -6,12 +6,11 @@ import { useFirebase } from '../components/providers/FirebaseWrapper';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/app/components/ui/Card';
 import { Button } from '@/app/components/ui/Button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { DollarSign, TrendingUp, Users, ShoppingBag, CreditCard, Calendar } from 'lucide-react';
-import { useAuthModal } from '../context/AuthModalContext';
+import { DollarSign, TrendingUp, ShoppingBag, Calendar } from 'lucide-react';
+
 import { collection, query, where, getDocs, orderBy, getFirestore } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { CategoryIcon } from '@/CategorySelect';
-import { CATEGORIES, Category, getCategoryById, getPopularCategories } from '@/app/lib/categories';
+
+import { Category, getCategoryById, getPopularCategories } from '@/app/lib/categories';
 import { mockBills} from '@/app/lib/mockData';
 import LoginPrompt from '../components/LoginPrompt';
 
@@ -86,22 +85,15 @@ interface Bill {
   createdAt: Date; // วันที่สร้างบิล
 }
 
-export const revalidate = 600;
-
-export default async function StatisticsPage() {
-  // ตัวอย่าง fetch ข้อมูลฝั่ง server (สามารถแทนที่ด้วย fetch จริงได้)
-  // const stats = await fetchStatisticsFromDB();
-  // return <StatisticsComponent stats={stats} />;
-
-  // โค้ดเดิม (client logic) สามารถคงไว้ได้
+export default function StatisticsPage() {
   const { user, loading } = useFirebase(); // ดึงข้อมูลผู้ใช้จาก Firebase
   const router = useRouter(); // ใช้ router สำหรับการนำทาง
-  const { openLoginModal } = useAuthModal(); // ฟังก์ชันเปิดโมดัลล็อกอิน
+
   const [stats, setStats] = useState<StatisticsData | null>(null); // สถานะสำหรับข้อมูลสถิติ
   const [isLoading, setIsLoading] = useState(true); // สถานะการโหลดข้อมูล
   const [categoryStats, setCategoryStats] = useState<any[]>([]);
   const [popularCategories, setPopularCategories] = useState<any[]>([]);
-  const [categoryTotals, setCategoryTotals] = useState<Record<string, number>>({});
+
   const [error, setError] = useState<string | null>(null);
   
   // สร้าง cache สำหรับ categories เพื่อลดการเรียกใช้ getCategoryById ซ้ำๆ
@@ -172,8 +164,7 @@ export default async function StatisticsPage() {
 
     try {
       const bills = mockBills;
-      const today = new Date();
-      const { monthData, monthLookup } = createLast6MonthsData();
+      const { monthData } = createLast6MonthsData();
       
       // ใช้การวนลูปเดียวเพื่อคำนวณค่าหลายอย่างพร้อมกัน
       let totalAmount = 0;
@@ -275,7 +266,6 @@ export default async function StatisticsPage() {
         .sort((a, b) => b.value - a.value);
       
       setCategoryStats(categoryStatsData);
-      setCategoryTotals(categoryTotals);
       
       // สร้างข้อมูลหมวดหมู่ยอดนิยม
       const popularCats = getPopularCategories(categoryCounts);
@@ -459,7 +449,6 @@ export default async function StatisticsPage() {
         .sort((a, b) => b.value - a.value);
       
       setCategoryStats(categoryStatsData);
-      setCategoryTotals(categoryTotals);
       
       // สร้างข้อมูลหมวดหมู่ยอดนิยม
       const popularCats = getPopularCategories(categoryCounts);

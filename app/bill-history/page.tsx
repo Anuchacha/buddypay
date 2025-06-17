@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoginPrompt from '../components/LoginPrompt';
 import { mockBills } from '../lib/mockData';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/app/components/ui/Card';
-import { Users, CheckCircle2, XCircle, ChevronDown } from 'lucide-react';
+import { Users, CheckCircle2, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CategoryIcon } from '@/CategorySelect';
-import { getCategoryById } from '@/app/lib/categories';
+
 import { db } from '../lib/firebase';
 import { 
   collection, 
@@ -16,7 +16,6 @@ import {
   where, 
   getDocs, 
   doc, 
-  updateDoc, 
   writeBatch,
   orderBy,
   limit,
@@ -25,8 +24,7 @@ import {
   DocumentData,
   QueryDocumentSnapshot
 } from 'firebase/firestore';
-import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
-import { debounce } from 'lodash';
+
 import { Button } from '@/app/components/ui/Button';
 import localforage from 'localforage';
 
@@ -37,12 +35,10 @@ export const dynamic = 'force-dynamic';
 export default function BillHistory() {
   const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
-  
+    const router = useRouter();
   // State สำหรับ pagination
   const [page, setPage] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [bills, setBills] = useState<any[]>([]);
@@ -181,81 +177,7 @@ export default function BillHistory() {
     }
   };
   
-  // สร้าง mutation สำหรับอัพเดตสถานะการชำระเงิน
-  const updatePaymentMutation = useMutation({
-    mutationFn: async ({ billId, participantId, newStatus }: { billId: string, participantId: string, newStatus: 'paid' | 'pending' }) => {
-      if (!isAuthenticated) {
-        throw new Error("กรุณาเข้าสู่ระบบเพื่อดำเนินการ");
-      }
-      
-      // หาบิลที่ต้องการอัพเดต
-      const billToUpdate = bills.find(bill => bill.id === billId);
-      if (!billToUpdate) {
-        throw new Error("ไม่พบบิลที่ต้องการอัพเดต");
-      }
-      
-      // หาสถานะปัจจุบันของผู้เข้าร่วม
-      const participant = billToUpdate.participants.find((p: any) => p.id === participantId);
-      if (!participant) {
-        throw new Error("ไม่พบผู้เข้าร่วมที่ต้องการอัพเดต");
-      }
-      
-      // ตรวจสอบว่าสถานะเปลี่ยนแปลงจริงหรือไม่
-      if (participant.status === newStatus) {
-        console.log('Status is already', newStatus);
-        return { billId, noChange: true };
-      }
-      
-      // อัพเดตสถานะในฐานข้อมูล
-      const billRef = doc(db, 'bills', billId);
-      
-      // สร้างข้อมูลผู้เข้าร่วมที่มีการอัพเดตสถานะ
-      const updatedParticipants = billToUpdate.participants.map((p: any) => {
-        if (p.id === participantId) {
-          return { ...p, status: newStatus };
-        }
-        return p;
-      });
-      
-      // ตรวจสอบว่าทุกคนชำระแล้วหรือไม่
-      const allPaid = updatedParticipants.every((p: any) => p.status === 'paid');
-      const billStatus = allPaid ? 'paid' : 'pending';
-      
-      // อัพเดตข้อมูลในฐานข้อมูล
-      await updateDoc(billRef, {
-        participants: updatedParticipants,
-        status: billStatus
-      });
-      
-      return { 
-        billId, 
-        updatedParticipants, 
-        billStatus 
-      };
-    },
-    onSuccess: (data: any) => {
-      if (data.noChange) return;
-      
-      // อัพเดตข้อมูลใน state
-      setBills(prevBills => prevBills.map(bill => {
-        if (bill.id === data.billId) {
-          return {
-            ...bill,
-            participants: data.updatedParticipants,
-            status: data.billStatus
-          };
-        }
-        return bill;
-      }));
-      
-      // อัพเดตแคช
-      cacheBills(bills);
-    },
-    onError: (error: Error) => {
-      console.error('Error updating payment status:', error);
-      alert('เกิดข้อผิดพลาดในการอัพเดตสถานะการชำระเงิน');
-    }
-  });
+  // หมายเหตุ: ใช้ updateAllParticipants แทน mutation สำหรับอัพเดตสถานะ
   
   // ฟังก์ชันสำหรับ batch update สำหรับอัพเดตสถานะทั้งบิล
   const updateAllParticipants = async (billId: string, newStatus: 'paid' | 'pending') => {
@@ -336,16 +258,7 @@ export default function BillHistory() {
     }
   };
   
-  // สร้าง debounced function สำหรับอัพเดตสถานะการชำระเงิน
-  const debouncedUpdateStatus = useMemo(
-    () => debounce(
-      (billId: string, participantId: string, newStatus: 'paid' | 'pending') => {
-        updatePaymentMutation.mutate({ billId, participantId, newStatus });
-      }, 
-      500 // 500ms delay
-    ), 
-    [updatePaymentMutation]
-  );
+
   
   // ใช้ Snapshot Listener เมื่อต้องการฟังการเปลี่ยนแปลงแบบ real-time
   const setupRealtimeListener = () => {
@@ -425,6 +338,7 @@ export default function BillHistory() {
   // ฟังก์ชันโหลดข้อมูลเพิ่มเติม
   const loadMore = () => {
     if (loading || !hasMore) return;
+    console.log('Loading page:', page + 1); // Log current page for debugging
     setPage(prev => prev + 1);
     fetchBills(false);
   };
@@ -595,8 +509,9 @@ export default function BillHistory() {
                               e.stopPropagation();
                               updateAllParticipants(bill.id, 'paid');
                             }}
+                            disabled={isSaving}
                           >
-                            ชำระทั้งหมด
+                            {isSaving ? 'กำลังบันทึก...' : 'ชำระทั้งหมด'}
                           </Button>
                         )}
                       </div>

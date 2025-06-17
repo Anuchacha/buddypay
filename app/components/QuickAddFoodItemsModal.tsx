@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
-import { X, Plus, Check, AlertCircle, DollarSign, Utensils, ChevronDown, Search, Tag, PlusCircle, ShoppingBag, Coffee, Clock } from 'lucide-react';
+import { X, Plus, Check, AlertCircle, DollarSign, Utensils, ChevronDown, Search, Tag, PlusCircle, ShoppingBag, Clock } from 'lucide-react';
 import { FoodSuggestion, foodSuggestions, getUniqueCategories, findFoodSuggestions, groupFoodSuggestionsByCategory } from '../data/foodSuggestions';
 
 interface QuickAddFoodItemsModalProps {

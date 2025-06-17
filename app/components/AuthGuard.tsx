@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 const PROTECTED_ROUTES: string[] = [];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 

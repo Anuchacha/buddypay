@@ -38,7 +38,11 @@ export async function toBlob(node: HTMLElement, options?: object): Promise<Blob>
   
   try {
     const htmlToImage = await import('html-to-image');
-    return await htmlToImage.toBlob(node, options);
+    const blob = await htmlToImage.toBlob(node, options);
+    if (!blob) {
+      throw new Error('Failed to generate blob');
+    }
+    return blob;
   } catch (error) {
     console.error('Error loading html-to-image module:', error);
     throw error;

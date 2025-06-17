@@ -1,13 +1,15 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { Bill, Participant, FoodItem } from '../../lib/schema';
-import { useParams, useRouter, notFound } from 'next/navigation';
+import { Bill, FoodItem } from '../../lib/schema';
+import { useParams, useRouter } from 'next/navigation';
 import { FirebaseProvider, useFirebase } from '../../components/providers/FirebaseWrapper';
 import { useAuthModal } from '../../context/AuthModalContext';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/app/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/Card';
 import { Button } from '@/app/components/ui/Button';
-import { CalendarIcon, ArrowLeft, DollarSign, Users, Tag, Clock, CheckCircle2, XCircle, Save } from 'lucide-react';
+import { CalendarIcon, ArrowLeft, CheckCircle2, XCircle, Save } from 'lucide-react';
 import { CategoryIcon } from '@/CategorySelect';
 
 type BillWithId = Bill & { id: string };
@@ -17,9 +19,8 @@ function BillDetailContent() {
   const router = useRouter();
   const { id } = useParams();
   const { user, loading } = useFirebase();
-  const { openLoginModal } = useAuthModal();
+    const { openLoginModal } = useAuthModal();
   const [bill, setBill] = useState<BillWithId | null>(null);
-  const [originalBill, setOriginalBill] = useState<BillWithId | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unauthorized, setUnauthorized] = useState(false);
@@ -72,7 +73,6 @@ function BillDetailContent() {
       } as BillWithId;
       
       setBill(billWithId);
-      setOriginalBill(JSON.parse(JSON.stringify(billWithId))); // เก็บสำเนาต้นฉบับไว้เปรียบเทียบการแก้ไข
     } catch (err) {
       console.error('เกิดข้อผิดพลาดในการโหลดข้อมูลบิล:', err);
       setError('ไม่สามารถโหลดข้อมูลบิลได้ กรุณาลองใหม่อีกครั้ง');
@@ -183,11 +183,6 @@ function BillDetailContent() {
         participants: updatedParticipants,
         status: billStatus
       });
-      setOriginalBill({
-        ...bill,
-        participants: updatedParticipants,
-        status: billStatus
-      });
       
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการอัพเดตสถานะการชำระเงิน:', error);
@@ -222,11 +217,6 @@ function BillDetailContent() {
         participants: updatedParticipants,
         status: newStatus
       });
-      setOriginalBill({
-        ...bill,
-        participants: updatedParticipants,
-        status: newStatus
-      });
       
     } catch (error) {
       console.error('เกิดข้อผิดพลาดในการอัพเดตสถานะการชำระเงิน:', error);
@@ -241,7 +231,7 @@ function BillDetailContent() {
     if (!bill) return {};
     
     const shares: Record<string, number> = {};
-    const { participants, foodItems, totalAmount, splitMethod, vat, serviceCharge, discount } = bill;
+    const { participants, foodItems, splitMethod, vat, serviceCharge, discount } = bill;
     
     // คำนวณยอดเงินรวมทั้งหมด (รวม VAT, ค่าบริการ, หักส่วนลด)
     const totalFoodCost = foodItems.reduce((sum, item) => sum + item.price, 0);
@@ -330,13 +320,14 @@ function BillDetailContent() {
       
       // สร้างค็อปปี้ของ bill และลบ id ออก
       const billToUpdate = {...bill};
-      delete billToUpdate.id;
+      // เนื่องจาก id เป็น required field ใน type definition
+      // เราจะใช้ destructuring เพื่อแยก id ออก
+      const { id: _, ...billWithoutId } = billToUpdate;
       
-      const docRef = doc(db, 'bills', id as string);
-      await updateDoc(docRef, billToUpdate);
+              const docRef = doc(db, 'bills', id as string);
+        await updateDoc(docRef, billWithoutId);
       
       setIsEdited(false);
-      setOriginalBill(JSON.parse(JSON.stringify(bill)));
       setSaveMessage({ type: 'success', text: 'บันทึกการเปลี่ยนแปลงเรียบร้อยแล้ว' });
       
       // ซ่อนข้อความหลังจาก 3 วินาที
@@ -683,13 +674,7 @@ function BillDetailContent() {
 }
 
 // คอมโพเนนต์หลักที่ครอบด้วย FirebaseProvider
-export default async function BillDetailPage({ params }) {
-  // ตัวอย่าง fetch ข้อมูลฝั่ง server (สามารถแทนที่ด้วย fetch จริงได้)
-  // const bill = await fetchBillById(params.id);
-  // if (!bill) return notFound();
-  // return <BillDetail bill={bill} />;
-
-  // โค้ดเดิม (client logic) สามารถคงไว้ได้
+export default function BillDetailPage() {
   return (
     <FirebaseProvider>
       <BillDetailContent />

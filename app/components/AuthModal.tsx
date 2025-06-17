@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import { useAuth } from '../context/AuthContext';

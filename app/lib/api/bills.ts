@@ -119,7 +119,7 @@ export const BillsAPI = {
           createdAt: data.createdAt?.toDate?.() || new Date(),
           updatedAt: data.updatedAt?.toDate?.() || null,
           // เพิ่มฟิลด์อื่นๆตามที่จำเป็น
-        } as BillWithId;
+        } as unknown as BillWithId;
       }) as BillWithId[];
       
       const hasMore = bills.length === perPage;

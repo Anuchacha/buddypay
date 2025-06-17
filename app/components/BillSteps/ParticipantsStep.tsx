@@ -3,17 +3,16 @@ import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { BillState } from '../../lib/billTypes';
 import ParticipantForm from '../../components/ParticipantForm';
-import { Input } from '../../components/ui/Input';
+
 import QuickAddParticipantsModal from '../../components/QuickAddParticipantsModal';
 import SaveGroupModal from '../../components/SaveGroupModal';
 import SelectGroupModal from '../../components/SelectGroupModal';
 import { ParticipantGroup } from '../../lib/types/participantGroup';
 import { useAuth } from '../../context/AuthContext';
-import { Users, Save, UserPlus, List } from 'lucide-react';
+import { Users, Save, List } from 'lucide-react';
 
 interface ParticipantsStepProps {
   state: BillState;
-  addParticipant: () => void;
   handleRemoveParticipant: (id: string) => void;
   onUpdateParticipant: (updated: any) => void;
   savedGroups: ParticipantGroup[];
@@ -23,14 +22,13 @@ interface ParticipantsStepProps {
 
 export default function ParticipantsStep({
   state,
-  addParticipant,
   handleRemoveParticipant,
   onUpdateParticipant,
   savedGroups,
   onSaveGroup,
   onSelectGroup
 }: ParticipantsStepProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isSaveGroupOpen, setIsSaveGroupOpen] = useState(false);
   const [isSelectGroupOpen, setIsSelectGroupOpen] = useState(false);
@@ -56,10 +54,6 @@ export default function ParticipantsStep({
       isNew: true,
     });
   };
-
-  // เช็คความพร้อมของข้อมูล
-  const isValid = state.participants.length > 0 && 
-                 !state.participants.some(p => !p.name || p.name.trim() === '');
 
   return (
     <>

@@ -1,7 +1,7 @@
 'use client';
 
-import { useReducer, useEffect, Suspense, lazy } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useReducer, useEffect } from 'react';
+
 import { useAuth } from '../context/AuthContext';
 import { Card, CardFooter } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -19,7 +19,7 @@ import BillDetailsStep from '../components/BillSteps/BillDetailsStep';
 import ResultStep from '../components/BillSteps/ResultStep';
 
 // Lazy loading ของคอมโพเนนต์ที่มีขนาดใหญ่
-const BillSummaryComponent = lazy(() => import('../components/BillSummary'));
+
 
 export default function ShareBillPage() {
   const { user, isAuthenticated } = useAuth();
@@ -32,14 +32,12 @@ export default function ShareBillPage() {
     qrPayload,
     setQrPayload,
     currentStep,
-    setCurrentStep,
+
     isLoading,
     error,
     notes,
     setNotes,
     calculatedResults,
-    addParticipant,
-    addFoodItem,
     handleRemoveParticipant,
     handleRemoveFoodItem,
     handleSaveBill,
@@ -49,11 +47,10 @@ export default function ShareBillPage() {
     goToNextStep,
     goToPreviousStep,
     goToStep,
-    showToast,
+
     // กลุ่มผู้เข้าร่วม
     savedGroups,
-    isLoadingGroups,
-    loadParticipantGroups,
+
     saveParticipantGroup,
     loadParticipantGroup
   } = useBillManagement(state, dispatch);
@@ -191,7 +188,6 @@ export default function ShareBillPage() {
               {currentStep === 0 && (
                 <ParticipantsStep 
                   state={state}
-                  addParticipant={addParticipant}
                   handleRemoveParticipant={handleRemoveParticipant}
                   onUpdateParticipant={(updated) => dispatch({ type: 'UPDATE_PARTICIPANT', payload: updated })}
                   savedGroups={savedGroups}
@@ -203,7 +199,6 @@ export default function ShareBillPage() {
               {currentStep === 1 && (
                 <FoodItemsStep
                   state={state}
-                  addFoodItem={addFoodItem}
                   handleRemoveFoodItem={handleRemoveFoodItem}
                   onUpdateFoodItem={(updated) => dispatch({ type: 'UPDATE_FOOD_ITEM', payload: updated })}
                 />

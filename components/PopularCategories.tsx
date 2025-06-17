@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { useFirebase } from '@/app/components/providers/FirebaseWrapper';
-import { Category, CATEGORIES, getCategoryById } from '@/app/lib/categories';
+import { Category, getCategoryById } from '@/app/lib/categories';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/Card';
 
 export function PopularCategories() {

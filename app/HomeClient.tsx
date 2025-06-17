@@ -2,12 +2,12 @@
 
 import { Suspense, lazy, useEffect } from 'react';
 import { Button } from '@/app/components/ui/Button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/Card';
 import { useAuthModal } from './context/AuthModalContext';
-import Image from 'next/image';
+
 
 const ChatbotButton = lazy(() => import('./components/ChatbotButton'));
-const PopularCategories = lazy(() => import('@/components/PopularCategories').then(mod => ({ default: mod.PopularCategories })));
+
 
 const features = [
   { title: 'แบ่งบิลแสนง่าย', description: 'คำนวณค่าอาหาร ค่าเช่า หรือค่าใช้จ่ายต่างๆ ระหว่างเพื่อนได้อย่างรวดเร็ว', icon: '🧮' },

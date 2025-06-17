@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { hash } from 'bcryptjs';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/app/lib/firebase';

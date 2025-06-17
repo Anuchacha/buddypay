@@ -1,4 +1,4 @@
-import { BillAction, BillState, FoodItemWithFlag } from '../lib/billTypes';
+import { BillAction, BillState } from '../lib/billTypes';
 
 // สร้าง reducer function
 export function billReducer(state: BillState, action: BillAction): BillState {

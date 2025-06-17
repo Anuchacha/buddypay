@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
+import { useState, useRef, useMemo, useCallback, Suspense } from 'react';
 import { SplitResult } from '../lib/billCalculator';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
@@ -16,7 +16,7 @@ import {
   AlertCircle, 
   Calendar, 
   FileText,
-  Coffee,
+
   Utensils
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -27,10 +27,7 @@ import { useProgressiveLoading, useImagePreloader } from '../hooks/useProgressiv
 import '../styles/shared.css';
 
 // แก้ไขการ import virtualization
-const FixedSizeList = dynamic<any>(() => 
-  import('react-window').then((mod) => mod.FixedSizeList), 
-  { ssr: false }
-);
+
 
 // โหลด QRCode component แบบ dynamic เพื่อป้องกันปัญหา SSR
 const QRCode = dynamic(() => import('react-qr-code'), { 
@@ -41,9 +38,7 @@ const QRCode = dynamic(() => import('react-qr-code'), {
 });
 
 // กำหนดประเภทข้อมูลให้ชัดเจน
-type HtmlToImageType = {
-  toPng: (node: HTMLElement, options?: object) => Promise<string>;
-};
+
 
 // ประกาศ type ของ Item ให้ชัดเจน
 type BillItem = {
@@ -71,18 +66,7 @@ type BillSummaryProps = {
   notes?: string; // เพิ่มโน๊ต
 };
 
-// กำหนด item type
-type ReceiptItem = {
-  id: string;
-  name: string;
-  amount: number;
-  description?: {
-    food: string;
-    service: string;
-    discount: number;
-    vat: number;
-  };
-};
+
 
 // แก้ไข SplitResult type ให้รองรับโครงสร้างข้อมูลที่ต้องการใช้
 type SplitResultExtended = SplitResult & {
@@ -122,9 +106,7 @@ export default function BillSummary({
   });
   
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [htmlToImageModule, setHtmlToImageModule] = useState<HtmlToImageType | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isModuleLoading, setIsModuleLoading] = useState(false);
   const [moduleError, setModuleError] = useState<string | null>(null);
   
   // Preload QR code image หากมี
@@ -180,7 +162,6 @@ export default function BillSummary({
   
   // คำนวณยอดรวมทั้งหมด - ใช้ useMemo
   const {
-    subtotal,
     vatAmount,
     serviceChargeAmount,
     totalAmount
@@ -224,24 +205,7 @@ export default function BillSummary({
     [totalAmount, participantCount]
   );
   
-  // ปรับปรุงการโหลดโมดูล - โหลดเฉพาะเมื่อต้องการใช้งาน
-  const loadHtmlToImageModule = useCallback(async () => {
-    if (htmlToImageModule) return htmlToImageModule; // ถ้าโหลดแล้วไม่ต้องโหลดซ้ำ
-    
-    try {
-      setIsModuleLoading(true);
-      const imageModule = await import('../utils/htmlToImageWrapper');
-      setHtmlToImageModule(imageModule);
-      setModuleError(null);
-      return imageModule;
-    } catch (err) {
-      console.error('ไม่สามารถโหลดโมดูล html-to-image:', err);
-      setModuleError('ไม่สามารถโหลดเครื่องมือสร้างรูปภาพได้');
-      return null;
-    } finally {
-      setIsModuleLoading(false);
-    }
-  }, [htmlToImageModule]);
+
 
   // ฟังก์ชันพิมพ์ใบเสร็จ - ใช้ useCallback
   const printReceipt = useCallback(() => {
@@ -610,7 +574,7 @@ export default function BillSummary({
         <button 
           onClick={downloadAsImage} 
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
-          disabled={isDownloading || isModuleLoading || !!moduleError}
+                          disabled={isDownloading || !!moduleError}
           aria-label="ดาวน์โหลดใบเสร็จเป็นรูปภาพ"
         >
           {isDownloading ? (

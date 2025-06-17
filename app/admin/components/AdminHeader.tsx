@@ -4,19 +4,10 @@ import Link from 'next/link';
 import { LogOut, Bell, Settings } from 'lucide-react';
 import { useAuth } from '@/app/context/AuthContext';
 
-interface NextAuthUser {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  role?: string;
-}
 
-interface AdminHeaderProps {
-  user?: NextAuthUser;
-}
 
 export default function AdminHeader() {
-  const { user: firebaseUser, userRole, logout } = useAuth();
+  const { user: firebaseUser, logout } = useAuth();
   
   // ใช้ข้อมูลจาก Firebase
   const userName = firebaseUser?.displayName || 'ผู้ดูแลระบบ';

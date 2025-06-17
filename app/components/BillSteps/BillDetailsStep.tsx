@@ -4,8 +4,8 @@ import { BillState } from '../../lib/billTypes';
 import { CategorySelect } from '../../../CategorySelect';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, FileText, Info, LucideIcon, Receipt, Utensils, Coffee, ShoppingBag, Film, Pizza, Car, Droplet, Martini, Book, Shirt, Train, Home, CreditCard, Award, Heart, Music, Send, Briefcase, Tag, Flame, MapPin } from 'lucide-react';
-import { BillTemplate, billTemplates, getUniqueCategories as getBillCategories, findBillTemplates, groupBillTemplatesByCategory } from '../../data/billTemplates';
+import { ChevronDown, Info, Receipt, Tag, FileText } from 'lucide-react';
+import { getUniqueCategories as getBillCategories, findBillTemplates, groupBillTemplatesByCategory } from '../../data/billTemplates';
 import { localStorageUtils } from '../../utils/localStorage';
 
 interface BillDetailsStepProps {
@@ -50,46 +50,7 @@ export default function BillDetailsStep({
     }
   }, [recentlyUsed]);
 
-  const billTemplates: BillTemplate[] = [
-    // อาหาร
-    { name: 'อาหารกลางวัน', icon: Utensils, color: 'text-orange-500', category: 'อาหาร' },
-    { name: 'อาหารเย็น', icon: Utensils, color: 'text-blue-500', category: 'อาหาร' },
-    { name: 'ร้านอาหารญี่ปุ่น', icon: Utensils, color: 'text-red-500', category: 'อาหาร' },
-    { name: 'คาเฟ่', icon: Coffee, color: 'text-amber-600', category: 'อาหาร' },
-    { name: 'พิซซ่า', icon: Pizza, color: 'text-red-500', category: 'อาหาร' },
-    { name: 'ข้าวมันไก่', icon: Utensils, color: 'text-yellow-500', category: 'อาหาร' },
-    { name: 'ส้มตำ', icon: Utensils, color: 'text-green-500', category: 'อาหาร' },
-    { name: 'ชาบู', icon: Flame, color: 'text-red-600', category: 'อาหาร' },
-    
-    // เดินทาง
-    { name: 'ค่าเดินทาง', icon: Car, color: 'text-blue-600', category: 'เดินทาง' },
-    { name: 'ค่าแท็กซี่', icon: Car, color: 'text-yellow-500', category: 'เดินทาง' },
-    { name: 'ค่าน้ำมัน', icon: Droplet, color: 'text-blue-500', category: 'เดินทาง' },
-    { name: 'ค่ารถไฟฟ้า', icon: Train, color: 'text-blue-600', category: 'เดินทาง' },
-    { name: 'แชร์เดินทางต่างจังหวัด', icon: MapPin, color: 'text-red-500', category: 'เดินทาง' },
-    
-    // บันเทิง
-    { name: 'หนัง', icon: Film, color: 'text-purple-500', category: 'บันเทิง' },
-    { name: 'คอนเสิร์ต', icon: Music, color: 'text-pink-500', category: 'บันเทิง' },
-    { name: 'เกม', icon: Film, color: 'text-indigo-500', category: 'บันเทิง' },
-    { name: 'ปาร์ตี้', icon: Martini, color: 'text-pink-500', category: 'บันเทิง' },
-    
-    // ช้อปปิ้ง
-    { name: 'ช้อปปิ้ง', icon: ShoppingBag, color: 'text-green-500', category: 'ช้อปปิ้ง' },
-    { name: 'เสื้อผ้า', icon: Shirt, color: 'text-blue-400', category: 'ช้อปปิ้ง' },
-    { name: 'ของขวัญ', icon: Heart, color: 'text-red-500', category: 'ช้อปปิ้ง' },
-    { name: 'เครื่องสำอาง', icon: Award, color: 'text-pink-400', category: 'ช้อปปิ้ง' },
-    
-    // ที่พักอาศัย
-    { name: 'ค่าน้ำ/ไฟ', icon: Droplet, color: 'text-cyan-500', category: 'ที่พักอาศัย' },
-    { name: 'ค่าเช่า', icon: Home, color: 'text-blue-600', category: 'ที่พักอาศัย' },
-    { name: 'ค่าอินเทอร์เน็ต', icon: Send, color: 'text-indigo-500', category: 'ที่พักอาศัย' },
-    
-    // อื่นๆ
-    { name: 'ค่าเล่าเรียน', icon: Book, color: 'text-amber-600', category: 'อื่นๆ' },
-    { name: 'ค่าใช้จ่ายประจำเดือน', icon: Briefcase, color: 'text-gray-600', category: 'อื่นๆ' },
-    { name: 'ค่าประกัน', icon: CreditCard, color: 'text-green-600', category: 'อื่นๆ' },
-  ];
+
 
   // ใช้ useMemo เพื่อหมวดหมู่และกรองรายการ
   const categories = useMemo(() => getBillCategories(), []);

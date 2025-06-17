@@ -88,6 +88,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Firebase initialization error:", error);
       setLoading(false);
+      return; // เพิ่ม return เพื่อให้ทุก code path มี return value
     }
   }, []);
 

@@ -55,6 +55,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/crypto-js": "^4.2.2",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.30",
     "@types/react": "^19",

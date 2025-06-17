@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Participant, FoodItem } from '../lib/schema';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Input } from './ui/Input';

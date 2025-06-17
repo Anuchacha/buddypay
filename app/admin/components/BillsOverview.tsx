@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, MoreHorizontal, Download, Trash, Eye, Printer } from 'lucide-react';
-import { collection, query, getDocs, orderBy, where, doc, updateDoc, deleteDoc, Timestamp, startAfter, limit } from 'firebase/firestore';
+import { Search, Filter, Download, Eye, Printer, Trash } from 'lucide-react';
+import { collection, query, getDocs, orderBy, Timestamp, startAfter, limit } from 'firebase/firestore';
 import { format, parseISO } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { db } from '@/app/lib/firebase';
