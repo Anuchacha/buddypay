@@ -28,15 +28,6 @@ const nextConfig = {
   
   // ปรับแต่ง webpack เพื่อลดขนาด bundle
   webpack: (config, { isServer }) => {
-    // สำหรับ Client-side ใช้ conditional imports เพื่อลดขนาด bundle
-    if (!isServer) {
-      // ใช้ alias สำหรับ packages ที่ใหญ่
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'html-to-image': isServer ? false : 'html-to-image'
-      };
-    }
-    
     // Tree-shaking สำหรับ lodash และ libraries อื่นๆ
     config.optimization.usedExports = true;
     
