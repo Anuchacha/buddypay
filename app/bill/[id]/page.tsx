@@ -1,10 +1,8 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { Bill, Participant, FoodItem } from '../../lib/schema';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import { FirebaseProvider, useFirebase } from '../../components/providers/FirebaseWrapper';
 import { useAuthModal } from '../../context/AuthModalContext';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/app/components/ui/Card';
@@ -685,7 +683,13 @@ function BillDetailContent() {
 }
 
 // คอมโพเนนต์หลักที่ครอบด้วย FirebaseProvider
-export default function BillDetailPage() {
+export default async function BillDetailPage({ params }) {
+  // ตัวอย่าง fetch ข้อมูลฝั่ง server (สามารถแทนที่ด้วย fetch จริงได้)
+  // const bill = await fetchBillById(params.id);
+  // if (!bill) return notFound();
+  // return <BillDetail bill={bill} />;
+
+  // โค้ดเดิม (client logic) สามารถคงไว้ได้
   return (
     <FirebaseProvider>
       <BillDetailContent />

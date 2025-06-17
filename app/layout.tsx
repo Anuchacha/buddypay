@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'BuddyPay Team' }],
   keywords: ['บิล', 'แชร์บิล', 'แบ่งบิล', 'อาหาร', 'คำนวณบิล'],
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon-192x192.png',
   },
   // เพิ่มสำหรับ PWA
   manifest: '/manifest.json',
@@ -96,11 +96,6 @@ export default function RootLayout({
           href="https://firebaseapp.com"
           crossOrigin="anonymous"
         />
-        <link
-          rel="preload"
-          href="/icon.png"
-          as="image"
-        />
         {/* ปรับปรุง Content Security Policy */}
         <meta
           httpEquiv="Content-Security-Policy"
@@ -138,6 +133,9 @@ export default function RootLayout({
         
         {/* Set viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* เพิ่ม favicon ขนาดต่างๆ */}
+        <link rel="icon" type="image/png" href="/icon-192x192.png" sizes="192x192" />
+        <link rel="icon" type="image/png" href="/icon-512x512.png" sizes="512x512" />
       </head>
       <body className="bg-gray-50">
         <Providers>

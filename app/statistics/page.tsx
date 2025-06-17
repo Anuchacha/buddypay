@@ -86,7 +86,14 @@ interface Bill {
   createdAt: Date; // วันที่สร้างบิล
 }
 
-export default function StatisticsPage() {
+export const revalidate = 600;
+
+export default async function StatisticsPage() {
+  // ตัวอย่าง fetch ข้อมูลฝั่ง server (สามารถแทนที่ด้วย fetch จริงได้)
+  // const stats = await fetchStatisticsFromDB();
+  // return <StatisticsComponent stats={stats} />;
+
+  // โค้ดเดิม (client logic) สามารถคงไว้ได้
   const { user, loading } = useFirebase(); // ดึงข้อมูลผู้ใช้จาก Firebase
   const router = useRouter(); // ใช้ router สำหรับการนำทาง
   const { openLoginModal } = useAuthModal(); // ฟังก์ชันเปิดโมดัลล็อกอิน
