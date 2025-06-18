@@ -94,75 +94,95 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
 
   // Authentication methods
   const signIn = async (email: string, password: string) => {
-    if (!auth) throw new Error('Firebase auth is not initialized');
-    return signInWithEmailAndPassword(auth, email, password);
+    if (!auth) throw new Error('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+    try {
+      return await signInWithEmailAndPassword(auth, email, password);
+    } catch (error: any) {
+      // ปรับปรุง error messages ให้เป็นมิตรกับผู้ใช้
+      throw error; // ปล่อยให้ AuthContext จัดการ error message
+    }
   };
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    if (!auth) throw new Error('Firebase auth is not initialized');
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (!auth) throw new Error('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
-    // Update display name if provided
-    if (displayName && userCredential.user) {
-      await updateProfile(userCredential.user, { displayName });
+      // Update display name if provided
+      if (displayName && userCredential.user) {
+        await updateProfile(userCredential.user, { displayName });
+        
+        // เก็บข้อมูลผู้ใช้ในคอลเลกชัน users ใน Firestore พร้อมกำหนด role เป็น 'user'
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email,
+          displayName: displayName,
+          role: 'user',
+          createdAt: new Date(),
+        });
+      }
       
-      // เก็บข้อมูลผู้ใช้ในคอลเลกชัน users ใน Firestore พร้อมกำหนด role เป็น 'user'
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: displayName,
-        role: 'user',
-        createdAt: new Date(),
-      });
+      return userCredential;
+    } catch (error: any) {
+      // ปล่อยให้ AuthContext จัดการ error message
+      throw error;
     }
-    
-    return userCredential;
   };
 
   const signInWithGoogle = async () => {
-    if (!auth) throw new Error('Firebase auth is not initialized');
-    const result = await signInWithPopup(auth, googleProvider);
+    if (!auth) throw new Error('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
     
-    // เก็บข้อมูลผู้ใช้ในคอลเลกชัน users ใน Firestore หากยังไม่มี
-    if (result.user) {
-      const userRef = doc(db, 'users', result.user.uid);
-      const userDoc = await getDoc(userRef);
-      
-      // ตรวจสอบว่ามีข้อมูลผู้ใช้ในระบบแล้วหรือไม่
-      if (userDoc.exists()) {
-        console.log('User already exists in Firestore');
-        // อัพเดทเฉพาะข้อมูลที่จำเป็น แต่ไม่เปลี่ยน role ที่มีอยู่แล้ว
-        await updateDoc(userRef, {
-          lastLogin: new Date()
-        });
-      } else {
-        // ถ้ายังไม่มีข้อมูลผู้ใช้ ให้สร้างใหม่พร้อมกำหนด role เป็น 'user'
-        console.log('Creating new user in Firestore');
-        await setDoc(userRef, {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          role: 'user', // กำหนดค่าเริ่มต้นเป็น user
-          status: 'active',
-          createdAt: new Date(),
-          lastLogin: new Date()
-        });
+      // เก็บข้อมูลผู้ใช้ในคอลเลกชัน users ใน Firestore หากยังไม่มี
+      if (result.user) {
+        const userRef = doc(db, 'users', result.user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        // ตรวจสอบว่ามีข้อมูลผู้ใช้ในระบบแล้วหรือไม่
+        if (userDoc.exists()) {
+          console.log('User already exists in Firestore');
+          // อัพเดทเฉพาะข้อมูลที่จำเป็น แต่ไม่เปลี่ยน role ที่มีอยู่แล้ว
+          await updateDoc(userRef, {
+            lastLogin: new Date()
+          });
+        } else {
+          // ถ้ายังไม่มีข้อมูลผู้ใช้ ให้สร้างใหม่พร้อมกำหนด role เป็น 'user'
+          console.log('Creating new user in Firestore');
+          await setDoc(userRef, {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL,
+            role: 'user', // กำหนดค่าเริ่มต้นเป็น user
+            status: 'active',
+            createdAt: new Date(),
+            lastLogin: new Date()
+          });
+        }
+        
+        // ดึงข้อมูล role ล่าสุดจาก Firestore
+        const updatedUserDoc = await getDoc(userRef);
+        if (updatedUserDoc.exists()) {
+          console.log('User role after sign in:', updatedUserDoc.data().role);
+        }
       }
       
-      // ดึงข้อมูล role ล่าสุดจาก Firestore
-      const updatedUserDoc = await getDoc(userRef);
-      if (updatedUserDoc.exists()) {
-        console.log('User role after sign in:', updatedUserDoc.data().role);
-      }
+      return result;
+    } catch (error: any) {
+      // ปล่อยให้ AuthContext จัดการ error message
+      throw error;
     }
-    
-    return result;
   };
 
   const signOut = async () => {
-    if (!auth) throw new Error('Firebase auth is not initialized');
-    return firebaseSignOut(auth);
+    if (!auth) throw new Error('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
+    try {
+      return await firebaseSignOut(auth);
+    } catch (error: any) {
+      // ปล่อยให้ AuthContext จัดการ error message
+      throw error;
+    }
   };
 
   // ฟังก์ชันดึงข้อมูล role ของผู้ใช้จาก Firestore

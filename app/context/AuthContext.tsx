@@ -99,15 +99,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push(returnUrl);
       router.refresh();
     } catch (error: any) {
-      console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // แสดงการแจ้งเตือนข้อผิดพลาด
+      // แสดงการแจ้งเตือนข้อผิดพลาดที่เป็นมิตรกับผู้ใช้
       showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
-      logErrorToAnalytics(error.code || 'login-error', error.message);
+      logErrorToAnalytics(error.code || 'login-error', error.message, { email, timestamp: new Date().toISOString() });
       
       throw error;
     }
@@ -129,15 +128,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push(returnUrl);
       router.refresh();
     } catch (error: any) {
-      console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // แสดงการแจ้งเตือนข้อผิดพลาด
+      // แสดงการแจ้งเตือนข้อผิดพลาดที่เป็นมิตรกับผู้ใช้
       showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
-      logErrorToAnalytics(error.code || 'signup-error', error.message);
+      logErrorToAnalytics(error.code || 'signup-error', error.message, { email, name, timestamp: new Date().toISOString() });
       
       throw error;
     }
@@ -159,15 +157,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push(returnUrl);
       router.refresh();
     } catch (error: any) {
-      console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // แสดงการแจ้งเตือนข้อผิดพลาด
+      // แสดงการแจ้งเตือนข้อผิดพลาดที่เป็นมิตรกับผู้ใช้
       showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
-      logErrorToAnalytics(error.code || 'google-login-error', error.message);
+      logErrorToAnalytics(error.code || 'google-login-error', error.message, { provider: 'google', timestamp: new Date().toISOString() });
       
       throw error;
     }
@@ -189,15 +186,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       Cookies.remove('user-role');
       setUserRole(null);
     } catch (error: any) {
-      console.error(error);
       const errorMessage = getErrorMessage(error);
       setError(errorMessage);
       
-      // แสดงการแจ้งเตือนข้อผิดพลาด
+      // แสดงการแจ้งเตือนข้อผิดพลาดที่เป็นมิตรกับผู้ใช้
       showToast(errorMessage, 'error');
       
       // บันทึก error เพื่อการวิเคราะห์
-      logErrorToAnalytics(error.code || 'logout-error', error.message);
+      logErrorToAnalytics(error.code || 'logout-error', error.message, { timestamp: new Date().toISOString() });
     }
   };
 
