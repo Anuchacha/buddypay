@@ -114,12 +114,12 @@ export default function ShareBillPage() {
     };
   }, [setupRealtimeListener]);
 
-  // useEffect สำหรับอัพเดตผลลัพธ์ที่ step 4
+  // useEffect สำหรับอัพเดตผลลัพธ์
   useEffect(() => {
-    if (currentStep === 4 && calculatedResults.length > 0) {
+    if (((currentStep === 4 && state.splitMethod === 'equal') || (currentStep === 5 && state.splitMethod === 'itemized')) && calculatedResults.length > 0) {
       dispatch({ type: 'SET_SPLIT_RESULTS', payload: calculatedResults });
     }
-  }, [currentStep, calculatedResults, dispatch]);
+  }, [currentStep, calculatedResults, dispatch, state.splitMethod]);
 
   // useEffect เพื่อสร้าง QR code อัตโนมัติเมื่อผู้ใช้กรอกข้อมูลครบ
   useEffect(() => {
@@ -263,7 +263,7 @@ export default function ShareBillPage() {
                 />
               )}
 
-              {(getDisplayStep() === 4 || (getDisplayStep() === 3 && state.splitMethod === 'equal')) && (
+              {(getDisplayStep() === 3 && state.splitMethod === 'equal') && (
                 <BillDetailsStep
                   state={state}
                   dispatch={dispatch}
@@ -274,9 +274,20 @@ export default function ShareBillPage() {
                 />
               )}
 
-              {getDisplayStep() === 5 && (
-                <ResultStep
+              {getDisplayStep() === 4 && state.splitMethod === 'itemized' && (
+                <BillDetailsStep
                   state={state}
+                  dispatch={dispatch}
+                  promptPayId={promptPayId}
+                  setPromptPayId={setPromptPayId}
+                  notes={notes}
+                  setNotes={setNotes}
+                />
+              )}
+
+              {((getDisplayStep() === 4 && state.splitMethod === 'equal') || (getDisplayStep() === 5 && state.splitMethod === 'itemized')) && (
+                <ResultStep
+                  state={{...state, splitResults: calculatedResults}}
                   promptPayId={promptPayId}
                   qrPayload={qrPayload}
                   notes={notes}
