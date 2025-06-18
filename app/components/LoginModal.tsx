@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Input } from './ui/Input';
+import { useErrorHandler } from '../hooks/useErrorHandler';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -16,32 +18,104 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     email: '',
     password: ''
   });
+  const [fieldErrors, setFieldErrors] = useState<{email?: string; password?: string}>({});
 
   const { login, loginWithGoogle, error, setError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const { handleError } = useErrorHandler({ componentName: 'LoginModal' });
+
+  const validateEmail = useCallback((email: string): string | undefined => {
+    if (!email.trim()) {
+      return 'กรุณากรอกอีเมล';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'รูปแบบอีเมลไม่ถูกต้อง';
+    }
+    return undefined;
+  }, []);
+
+  const validatePassword = useCallback((password: string): string | undefined => {
+    if (!password.trim()) {
+      return 'กรุณากรอกรหัสผ่าน';
+    }
+    if (password.length < 6) {
+      return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+    }
+    return undefined;
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Clear field error when user starts typing
+    if (fieldErrors[name as keyof typeof fieldErrors]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+
+    // Clear general error
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // ตรวจสอบข้อมูลที่กรอก
-    if (!formData.email || !formData.password) {
-      setError('กรุณากรอกอีเมลและรหัสผ่าน');
-      return;
-    }
-    
     try {
       setIsLoading(true);
+      setError(null);
+      setFieldErrors({});
+
+      // Validate fields
+      const emailError = validateEmail(formData.email);
+      const passwordError = validatePassword(formData.password);
+
+      if (emailError || passwordError) {
+        setFieldErrors({
+          email: emailError,
+          password: passwordError
+        });
+        return;
+      }
+
+      // Attempt login
       await login(formData.email, formData.password);
+      
+      // Reset form and close modal on success
+      setFormData({ email: '', password: '' });
+      setFieldErrors({});
       onClose();
+
     } catch (error) {
-      // ข้อผิดพลาดจะถูกจัดการใน AuthContext แล้ว
+      // Handle login errors
+      const errorMessage = error instanceof Error ? error.message : 'การเข้าสู่ระบบล้มเหลว';
+      
+      handleError(error as Error, {
+        action: 'User Login',
+        email: formData.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Check for specific error types
+      if (errorMessage.includes('user-not-found') || errorMessage.includes('wrong-password') || 
+          errorMessage.includes('invalid-credential')) {
+        setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      } else if (errorMessage.includes('too-many-requests')) {
+        setError('คำขอเข้าสู่ระบบมากเกินไป กรุณาลองใหม่ในภายหลัง');
+      } else if (errorMessage.includes('user-disabled')) {
+        setError('บัญชีผู้ใช้ถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
+      } else {
+        setError(errorMessage || 'การเข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -50,10 +124,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      setFieldErrors({});
+      
       await loginWithGoogle();
+      
+      // Reset form and close modal on success
+      setFormData({ email: '', password: '' });
       onClose();
     } catch (error) {
-      // ข้อผิดพลาดจะถูกจัดการใน AuthContext แล้ว
+      const errorMessage = error instanceof Error ? error.message : 'การเข้าสู่ระบบด้วย Google ล้มเหลว';
+      
+      handleError(error as Error, {
+        action: 'Google Login',
+        timestamp: new Date().toISOString(),
+      });
+
+      setError(errorMessage || 'การเข้าสู่ระบบด้วย Google ล้มเหลว กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsLoading(false);
     }
@@ -87,43 +174,40 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center gap-2">
+                <AlertCircle size={18} />
+                <span>{error}</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  อีเมล
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="example@email.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  autoComplete="email"
-                />
-              </div>
+              <Input
+                label="อีเมล"
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@email.com"
+                leftElement={<Mail size={16} />}
+                autoComplete="email"
+                error={fieldErrors.email}
+                required
+              />
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  รหัสผ่าน
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  autoComplete="current-password"
-                />
-              </div>
+              <Input
+                label="รหัสผ่าน"
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                leftElement={<Lock size={16} />}
+                autoComplete="current-password"
+                error={fieldErrors.password}
+                required
+              />
 
               <button
                 type="submit"

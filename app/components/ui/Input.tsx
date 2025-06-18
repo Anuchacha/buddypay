@@ -3,12 +3,12 @@ import React, { forwardRef, useState } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const inputVariants = cva(
-  "flex w-full bg-card text-card-foreground border border-border rounded-lg px-3 py-2 text-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20",
-        error: "border-destructive focus-visible:border-destructive focus-visible:ring-2 focus-visible:ring-destructive/20"
+        default: "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+        error: "border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
       },
       inputSize: {
         sm: "h-8 px-2.5 text-xs",
@@ -58,7 +58,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         
         <div className="relative">
           {leftElement && (
-            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500">
               {leftElement}
             </div>
           )}
@@ -75,7 +75,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           />
           
           {rightElement && !isPasswordField && (
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500">
               {rightElement}
             </div>
           )}
@@ -83,7 +83,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           {isPasswordField && (
             <button
               type="button"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
             >
@@ -99,7 +99,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         {(error || helperText) && (
           <p className={cn(
             "text-xs", 
-            error ? "text-destructive" : "text-muted-foreground"
+            error ? "text-red-600" : "text-gray-500"
           )}>
             {error || helperText}
           </p>

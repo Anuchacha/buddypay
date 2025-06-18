@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { BillState } from '../../lib/billTypes';
 import FoodItemForm from '../../components/FoodItemForm';
 import QuickAddFoodItemsModal from '../../components/QuickAddFoodItemsModal';
-import { Plus, Info, Coffee, ShoppingBag, DollarSign, Receipt, Calculator, ChevronRight } from 'lucide-react';
+import { Plus, Info, Coffee, ShoppingBag, Calculator } from 'lucide-react';
 
 interface FoodItemsStepProps {
   state: BillState;
@@ -21,9 +21,6 @@ export default function FoodItemsStep({
 }: FoodItemsStepProps) {
 
   const [isQuickAddModalOpen, setIsQuickAddModalOpen] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-
-
 
   // ฟังก์ชันเพิ่มรายการอาหารผ่าน modal
   const handleQuickAddFromModal = (name: string, price: number) => {
@@ -45,18 +42,12 @@ export default function FoodItemsStep({
     });
   };
 
-  // คำนวณยอดรวมและข้อมูลเพิ่มเติม
+  // คำนวณยอดรวม
   const calculateSummary = () => {
     const subtotal = state.foodItems.reduce((sum, item) => sum + item.price, 0);
-    const vatAmount = subtotal * state.vat / 100;
-    const serviceChargeAmount = subtotal * state.serviceCharge / 100;
-    const totalAmount = subtotal + vatAmount + serviceChargeAmount - state.discount;
     
     return {
       subtotal,
-      vatAmount,
-      serviceChargeAmount,
-      totalAmount,
       itemCount: state.foodItems.length,
     };
   };
@@ -105,19 +96,23 @@ export default function FoodItemsStep({
           className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-6 text-sm text-blue-700 flex items-start"
         >
           <Info size={18} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
-          <p>เพิ่มรายการอาหารทั้งหมดที่คุณและเพื่อนสั่ง เพื่อคำนวณการแชร์บิลที่ถูกต้อง</p>
+          <p>เพิ่มรายการอาหารทั้งหมดที่คุณและเพื่อนสั่ง พร้อมระบุราคาให้ครบถ้วน</p>
         </motion.div>
 
         {state.foodItems.length > 0 ? (
-          <div className="space-y-3">
-            <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-              <div className="grid grid-cols-12 gap-2 py-3 px-4 bg-gray-100 border-b text-sm font-medium text-gray-700">
-                <div className="col-span-5">รายการอาหาร</div>
-                <div className="col-span-3 text-center">ราคา (บาท)</div>
-                <div className="col-span-4 text-center">จัดการ</div>
+          <div className="space-y-6">
+            {/* ตารางรายการอาหาร */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+              {/* Header */}
+              <div className="grid grid-cols-12 gap-4 py-3 px-4 bg-gray-50 border-b text-sm font-medium text-gray-700">
+                <div className="col-span-1">#</div>
+                <div className="col-span-7">ชื่ออาหาร</div>
+                <div className="col-span-3 text-right">ราคา (บาท)</div>
+                <div className="col-span-1"></div>
               </div>
               
-              <div className="divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+              {/* รายการอาหาร */}
+              <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
                 <AnimatePresence>
                   {state.foodItems.map((item, index) => (
                     <motion.div
@@ -127,18 +122,16 @@ export default function FoodItemsStep({
                       exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: "hidden", y: -20 }}
                       transition={{ 
                         duration: 0.3, 
-                        delay: index * 0.05,
+                        delay: index * 0.02,
                         layout: { duration: 0.2 } 
                       }}
                       layout
-                      className="odd:bg-white even:bg-gray-50 hover:bg-blue-50/50 transition-colors"
                     >
                       <FoodItemForm
                         item={item}
-                        participants={state.participants}
-                        splitMethod={state.splitMethod}
                         onUpdate={onUpdateFoodItem}
                         onRemove={handleRemoveFoodItem}
+                        index={index}
                       />
                     </motion.div>
                   ))}
@@ -146,87 +139,26 @@ export default function FoodItemsStep({
               </div>
             </div>
             
-            {/* สรุปยอดรวม - แสดงเป็น card */}
+            {/* สรุปยอดรวม */}
             <motion.div 
-              className="mt-8 bg-white rounded-lg border border-gray-200 shadow-md overflow-hidden"
+              className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-4"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-medium text-gray-800 flex items-center">
-                  <Receipt className="w-5 h-5 mr-2 text-primary" />
-                  สรุปยอดรวมค่าอาหาร
-                </h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowSummary(!showSummary)}
-                  className="text-xs text-primary hover:text-primary/80 hover:bg-primary/10 p-2"
-                >
-                  {showSummary ? 'ซ่อนรายละเอียด' : 'แสดงรายละเอียด'}
-                  <ChevronRight className={`w-4 h-4 ml-1 transition-transform duration-200 ${showSummary ? 'rotate-90' : ''}`} />
-                </Button>
-              </div>
-              
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center text-gray-700 font-medium">
-                    <Calculator className="w-4 h-4 mr-1.5 text-primary" />
-                    รายการอาหารทั้งหมด
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Calculator className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="text-gray-800 font-medium">
-                    {summary.itemCount} รายการ
+                  <div>
+                    <h3 className="font-semibold text-gray-800">ยอดรวมค่าอาหาร</h3>
+                    <p className="text-sm text-gray-600">{summary.itemCount} รายการ</p>
                   </div>
                 </div>
-                
-                <div className="flex justify-between items-center pb-4 border-b border-dashed border-gray-200">
-                  <div className="flex items-center text-gray-700 font-medium">
-                    <DollarSign className="w-4 h-4 mr-1.5 text-primary" />
-                    ราคารวมค่าอาหาร
-                  </div>
-                  <div className="text-gray-800 font-semibold">
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-primary">
                     {summary.subtotal.toLocaleString()} บาท
-                  </div>
-                </div>
-                
-                <AnimatePresence>
-                  {showSummary && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      {summary.vatAmount > 0 && (
-                        <div className="flex justify-between items-center mt-3 text-sm">
-                          <div className="text-gray-600">ภาษีมูลค่าเพิ่ม {state.vat}%</div>
-                          <div className="text-gray-800">+ {summary.vatAmount.toLocaleString()} บาท</div>
-                        </div>
-                      )}
-                      
-                      {summary.serviceChargeAmount > 0 && (
-                        <div className="flex justify-between items-center mt-2 text-sm">
-                          <div className="text-gray-600">ค่าบริการ {state.serviceCharge}%</div>
-                          <div className="text-gray-800">+ {summary.serviceChargeAmount.toLocaleString()} บาท</div>
-                        </div>
-                      )}
-                      
-                      {state.discount > 0 && (
-                        <div className="flex justify-between items-center mt-2 text-sm">
-                          <div className="text-gray-600">ส่วนลด</div>
-                          <div className="text-red-600">- {state.discount.toLocaleString()} บาท</div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
-                  <div className="text-lg font-medium text-gray-700">ยอดรวมทั้งหมด</div>
-                  <div className="text-xl text-primary font-bold">
-                    {summary.totalAmount.toLocaleString()} บาท
                   </div>
                 </div>
               </div>
@@ -234,7 +166,7 @@ export default function FoodItemsStep({
             
             {/* ปุ่มเพิ่มรายการ */}
             <motion.div 
-              className="mt-6 flex justify-center"
+              className="flex justify-center"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
