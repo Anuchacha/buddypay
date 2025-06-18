@@ -47,6 +47,7 @@ class ErrorMonitoring {
   private maxErrors = 1000; // จำกัดจำนวน error ใน memory
   private sessionId: string;
   private buildVersion: string;
+  private isCapturing = false; // ป้องกัน recursive error
 
   constructor() {
     this.sessionId = this.generateSessionId();
@@ -71,17 +72,21 @@ class ErrorMonitoring {
     window.addEventListener('error', (event) => {
       try {
         // ป้องกัน recursive error จาก Error Monitoring ตัวเอง
+        if (this.isCapturing) return;
+        
         const errorMessage = event.error?.message || event.message || 'Unknown error';
-        if (errorMessage.includes('[Error Monitoring]') || 
-            errorMessage.includes('ErrorMonitoring') ||
-            event.filename?.includes('errorMonitoring')) {
-          return; // Skip logging errors from error monitoring system
+        const errorStack = event.error?.stack || '';
+        const filename = event.filename || '';
+
+        // Skip errors from error monitoring system
+        if (this.shouldSkipError(errorMessage, errorStack, filename)) {
+          return;
         }
 
         this.captureError(event.error || new Error(event.message), {
           component: 'Global',
           action: 'JavaScript Error',
-          url: event.filename,
+          url: filename,
           line: event.lineno,
           column: event.colno,
           fromErrorMonitoring: false,
@@ -95,11 +100,13 @@ class ErrorMonitoring {
     window.addEventListener('unhandledrejection', (event) => {
       try {
         // ป้องกัน recursive error
+        if (this.isCapturing) return;
+        
         const reason = event.reason;
         const reasonMessage = reason?.message || String(reason);
-        if (reasonMessage.includes('[Error Monitoring]') || 
-            reasonMessage.includes('ErrorMonitoring')) {
-          return; // Skip logging errors from error monitoring system
+        
+        if (this.shouldSkipError(reasonMessage, reason?.stack)) {
+          return;
         }
 
         this.captureError(
@@ -123,6 +130,26 @@ class ErrorMonitoring {
   }
 
   /**
+   * ตรวจสอบว่าควร skip error นี้หรือไม่
+   */
+  private shouldSkipError(message: string, stack?: string, filename?: string): boolean {
+    const skipPatterns = [
+      '[Error Monitoring]',
+      'ErrorMonitoring',
+      'errorMonitoring',
+      'captureError',
+      'captureWarning',
+      'Error Boundary',
+    ];
+
+    return skipPatterns.some(pattern => 
+      message.includes(pattern) || 
+      stack?.includes(pattern) || 
+      filename?.includes(pattern)
+    );
+  }
+
+  /**
    * บันทึก Error
    */
   captureError(
@@ -131,13 +158,19 @@ class ErrorMonitoring {
     level: ErrorReport['level'] = 'medium'
   ): string {
     try {
+      // ป้องกัน recursive error
+      if (this.isCapturing) {
+        return 'error-monitoring-busy';
+      }
+      
+      this.isCapturing = true;
+
       const errorObj = error instanceof Error ? error : new Error(String(error));
       
       // ป้องกัน recursive error จาก Error Monitoring ตัวเอง
       if (context.fromErrorMonitoring || 
-          errorObj.message.includes('[Error Monitoring]') ||
-          errorObj.message.includes('ErrorMonitoring') ||
-          errorObj.stack?.includes('errorMonitoring')) {
+          this.shouldSkipError(errorObj.message, errorObj.stack)) {
+        this.isCapturing = false;
         return 'skipped-recursive-error';
       }
 
@@ -200,21 +233,24 @@ class ErrorMonitoring {
       // Log ใน development (ป้องกัน recursive error)
       if (!this.isProduction && !fullContext.fromErrorMonitoring) {
         try {
-          console.group('[Error Monitoring]');
-          console.log('Error:', errorObj.message);
-          console.log('Stack:', errorObj.stack);
-          console.log('Context:', fullContext);
-          console.log('Fingerprint:', fingerprint);
-          console.groupEnd();
+          // ใช้ console.warn แทน console.error เพื่อหลีกเลี่ยง error listener
+          console.warn('[Error Monitoring] Captured Error:', {
+            message: errorObj.message,
+            level,
+            context: fullContext,
+            fingerprint,
+          });
         } catch (logError) {
           // Silent fail เพื่อป้องกัน recursive error
         }
       }
 
+      this.isCapturing = false;
       return fingerprint;
 
     } catch (monitoringError) {
       // Silent fail เพื่อป้องกัน recursive error
+      this.isCapturing = false;
       return 'error-monitoring-failed';
     }
   }
@@ -238,11 +274,15 @@ class ErrorMonitoring {
    */
   setUserContext(userId: string, userEmail?: string): void {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('error_monitoring_user', JSON.stringify({
-        userId,
-        userEmail,
-        timestamp: new Date().toISOString(),
-      }));
+      try {
+        sessionStorage.setItem('error_monitoring_user', JSON.stringify({
+          userId,
+          userEmail,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch (error) {
+        // Silent fail
+      }
     }
   }
 
@@ -251,7 +291,11 @@ class ErrorMonitoring {
    */
   clearUserContext(): void {
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('error_monitoring_user');
+      try {
+        sessionStorage.removeItem('error_monitoring_user');
+      } catch (error) {
+        // Silent fail
+      }
     }
   }
 
@@ -397,9 +441,8 @@ class ErrorMonitoring {
    */
   private async sendToExternalServices(errorReport: ErrorReport): Promise<void> {
     // ป้องกัน recursive error จาก Error Monitoring ตัวเอง
-    if (errorReport.context.fromErrorMonitoring || 
-        errorReport.message.includes('[Error Monitoring]') ||
-        errorReport.message.includes('ErrorMonitoring')) {
+    if (this.isCapturing || errorReport.context.fromErrorMonitoring || 
+        this.shouldSkipError(errorReport.message, errorReport.stack)) {
       return;
     }
 

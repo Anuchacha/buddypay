@@ -429,13 +429,19 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
       case 1: // รายการอาหาร
         return state.foodItems.length > 0 && state.foodItems.every(item => item.name.trim() !== '' && item.price > 0);
       case 2: // วิธีหาร
+        // เลือกวิธีการแบ่งแล้ว (มี default เป็น 'equal' อยู่แล้ว)
+        return state.splitMethod === 'equal' || state.splitMethod === 'itemized';
+      case 3: // จัดสรรรายการ (เฉพาะ itemized)
         if (state.splitMethod === 'itemized') {
           // ตรวจสอบว่าทุกรายการอาหารมีผู้กินอย่างน้อย 1 คน
           return state.foodItems.every(item => item.participants.length > 0);
         }
+        // สำหรับ equal split จะข้าม step นี้ไป
         return true;
-      case 3: // ข้อมูลบิล
+      case 4: // ข้อมูลบิล
         return state.billName.trim() !== '';
+      case 5: // ผลลัพธ์
+        return true;
       default:
         return true;
     }
@@ -443,9 +449,14 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
 
   // ฟังก์ชันสำหรับการเปลี่ยน step
   const goToNextStep = useCallback(() => {
-    if (currentStep < 5 - 1) {
+    if (currentStep < 6 - 1) {
       if (canProceedToNextStep()) {
-        setCurrentStep(prevStep => prevStep + 1);
+        // ถ้าเป็น equal split และอยู่ที่ step 2 (วิธีหาร) ให้ข้าม step 3 (จัดสรรรายการ)
+        if (state.splitMethod === 'equal' && currentStep === 2) {
+          setCurrentStep(4); // ไปที่ step ข้อมูลบิลเลย
+        } else {
+          setCurrentStep(prevStep => prevStep + 1);
+        }
         window.scrollTo(0, 0); // เลื่อนหน้าขึ้นบน
       } else {
         // แสดงข้อความข้อผิดพลาดตาม step ปัจจุบัน
@@ -457,25 +468,33 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
             showToast('กรุณากรอกชื่อและราคาของรายการอาหารให้ครบถ้วน', 'error');
             break;
           case 2:
-            showToast('กรุณาเลือกผู้ที่รับประทานอาหารในแต่ละรายการ', 'error');
+            showToast('กรุณาเลือกวิธีการหารบิล', 'error');
             break;
           case 3:
+            showToast('กรุณาเลือกผู้ที่รับประทานอาหารในแต่ละรายการ', 'error');
+            break;
+          case 4:
             showToast('กรุณากรอกชื่อบิล', 'error');
             break;
         }
       }
     }
-  }, [currentStep, canProceedToNextStep, showToast]);
+  }, [currentStep, canProceedToNextStep, showToast, state.splitMethod]);
 
   const goToPreviousStep = useCallback(() => {
     if (currentStep > 0) {
-      setCurrentStep(prevStep => prevStep - 1);
+      // ถ้าเป็น equal split และอยู่ที่ step 4 (ข้อมูลบิล) ให้กลับไป step 2 (วิธีหาร)
+      if (state.splitMethod === 'equal' && currentStep === 4) {
+        setCurrentStep(2);
+      } else {
+        setCurrentStep(prevStep => prevStep - 1);
+      }
       window.scrollTo(0, 0); // เลื่อนหน้าขึ้นบน
     }
-  }, [currentStep]);
+  }, [currentStep, state.splitMethod]);
   
   const goToStep = useCallback((step: number) => {
-    if (step >= 0 && step < 5) {
+    if (step >= 0 && step < 6) {
       setCurrentStep(step);
       window.scrollTo(0, 0); // เลื่อนหน้าขึ้นบน
     }

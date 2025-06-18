@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 
 // เพิ่ม import styles
-import '../styles/shared.css';
+// import '../styles/shared.css';
 
 // Static imports แทน dynamic
 import QRCode from 'react-qr-code';

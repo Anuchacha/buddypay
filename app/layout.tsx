@@ -4,7 +4,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 // นำเข้าไฟล์สไตล์ globals.css สำหรับกำหนดสไตล์ทั่วโลก
 import "./globals.css";
-import "./styles/shared.css"; // เพิ่มการนำเข้า styles/shared.css โดยตรง
 // นำเข้าคอมโพเนนต์ Providers สำหรับครอบคลุม Context ต่างๆ (เช่น authentication, theme, ฯลฯ)
 import Providers from './providers';
 import { FirebaseProvider } from './components/providers/FirebaseWrapper';
@@ -126,9 +125,6 @@ export default function RootLayout({
         {/* Preload fonts และ critical assets */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        
-        {/* Preload critical CSS */}
-        <link rel="preload" href="/styles/shared.css" as="style" />
         
         {/* Add DNS prefetching for external resources */}
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />

@@ -1,4 +1,3 @@
-
 import { Bill, FoodItem, Participant } from './schema';
 import { SplitResult } from './billCalculator';
 import { ParticipantGroup } from './types/participantGroup';
@@ -90,6 +89,7 @@ export const BILL_STEPS = [
   { title: 'ผู้ร่วมบิล', description: 'ใส่ชื่อผู้ร่วมบิล' },
   { title: 'รายการอาหาร', description: 'ใส่รายการอาหาร' },
   { title: 'วิธีหาร', description: 'เลือกวิธีหารบิล' },
+  { title: 'จัดสรรรายการ', description: 'เลือกผู้กินแต่ละรายการ' },
   { title: 'ข้อมูลบิล', description: 'ตั้งชื่อและรายละเอียด' },
   { title: 'ผลลัพธ์', description: 'สรุปการหารบิล' }
 ];

@@ -1,5 +1,7 @@
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { BillState } from '../../lib/billTypes';
+import { Badge } from '../ui/Badge';
+import { Users, Calculator, FileText, Info } from 'lucide-react';
 
 interface SplitMethodStepProps {
   state: BillState;
@@ -10,35 +12,65 @@ export default function SplitMethodStep({
   state,
   dispatch
 }: SplitMethodStepProps) {
+  
+  // คำนวณสถิติเบื้องต้น
+  const totalAmount = state.foodItems.reduce((sum, item) => sum + item.price, 0);
+  const participantCount = state.participants.length;
+  const foodItemCount = state.foodItems.length;
+  
+  // คำนวณค่าเฉลี่ยต่อคน (สำหรับ equal split)
+  const averagePerPerson = participantCount > 0 ? totalAmount / participantCount : 0;
+
   return (
     <>
-      <CardHeader className="bg-gray-50 border-b px-6 py-4">
+      <CardHeader className="bg-gradient-to-r from-primary/20 to-primary/5 border-b px-6 py-4">
         <CardTitle className="text-xl font-semibold flex items-center">
-          <span className="bg-primary text-white rounded-full w-6 h-6 inline-flex items-center justify-center mr-2 text-sm">3</span>
-          วิธีการหารบิล
+          <div className="w-8 h-8 rounded-full bg-primary text-white inline-flex items-center justify-center mr-2.5 text-sm shadow-sm">3</div>
+          <span className="text-primary">วิธีการหารบิล</span>
         </CardTitle>
       </CardHeader>
+      
       <CardContent className="space-y-6 p-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-5 text-sm text-blue-700">
-          <p className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            เลือกวิธีการหารบิลที่ต้องการ
-          </p>
+        {/* ข้อมูลสรุป */}
+        <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className="flex items-center space-x-2">
+            <Users className="w-4 h-4 text-primary" />
+            <span className="text-gray-600">ผู้เข้าร่วม:</span>
+            <Badge variant="secondary">{participantCount} คน</Badge>
+          </div>
+          <div className="flex items-center space-x-2">
+            <FileText className="w-4 h-4 text-primary" />
+            <span className="text-gray-600">รายการอาหาร:</span>
+            <Badge variant="secondary">{foodItemCount} รายการ</Badge>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Calculator className="w-4 h-4 text-primary" />
+            <span className="text-gray-600">ยอดรวม:</span>
+            <Badge variant="default">{totalAmount.toLocaleString()} บาท</Badge>
+          </div>
+        </div>
+
+        <div className="bg-blue-50 border border-blue-100 rounded-md p-4 text-sm text-blue-700 flex items-start">
+          <Info size={18} className="mr-2 text-blue-500 flex-shrink-0 mt-0.5" />
+          <p>เลือกวิธีการหารบิลที่ต้องการ แต่ละวิธีจะมีขั้นตอนการจัดการที่แตกต่างกัน</p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-3 text-gray-700">
+          <label className="block text-sm font-medium mb-4 text-gray-700">
             วิธีการหารบิล
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label className="flex items-start p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+          <div className="grid grid-cols-1 gap-4">
+            
+            {/* หารเท่ากันทุกคน */}
+            <label className={`relative flex items-start p-4 bg-white border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
+              state.splitMethod === 'equal' ? 'border-primary bg-primary/5' : 'border-gray-200'
+            }`}>
               <input
                 type="radio"
                 checked={state.splitMethod === 'equal'}
                 onChange={() => {
                   dispatch({ type: 'SET_SPLIT_METHOD', payload: 'equal' });
+                  // Auto-assign ทุกคนให้ทุกรายการเมื่อเลือก equal
                   if (state.participants.length > 0) {
                     const participantIds = state.participants.map(p => p.id);
                     const updatedFoodItems = state.foodItems.map(item => ({
@@ -48,89 +80,99 @@ export default function SplitMethodStep({
                     dispatch({ type: 'SET_FOOD_ITEMS', payload: updatedFoodItems });
                   }
                 }}
-                className="h-4 w-4 text-primary border-border focus:ring-primary cursor-pointer mt-0.5"
+                className="h-5 w-5 text-primary border-gray-300 focus:ring-primary cursor-pointer mt-0.5"
               />
-              <div className="ml-3">
-                <span className="block text-sm font-medium">หารเท่ากันทุกคน</span>
-                <span className="block text-xs text-gray-500 mt-1">แบ่งค่าอาหารเป็นจำนวนเท่าๆ กันตามจำนวนคน ทุกคนจ่ายเท่ากันหมด</span>
+              <div className="ml-4 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="block text-base font-medium text-gray-900">หารเท่ากันทุกคน</span>
+                  {state.splitMethod === 'equal' && (
+                    <Badge variant="default" className="ml-2">เลือกแล้ว</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1 mb-3">
+                  แบ่งค่าอาหารเป็นจำนวนเท่าๆ กันตามจำนวนคน ทุกคนจ่ายเท่ากันหมด
+                </p>
+                
+                {/* Preview สำหรับ Equal Split */}
+                {participantCount > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-green-700 font-medium">แต่ละคนจ่าย:</span>
+                      <span className="text-green-800 font-bold">
+                        {averagePerPerson.toLocaleString()} บาท
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </label>
             
-            <label className="flex items-start p-3 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+            {/* หารตามรายการที่สั่ง */}
+            <label className={`relative flex items-start p-4 bg-white border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
+              state.splitMethod === 'itemized' ? 'border-primary bg-primary/5' : 'border-gray-200'
+            }`}>
               <input
                 type="radio"
                 checked={state.splitMethod === 'itemized'}
                 onChange={() => {
                   dispatch({ type: 'SET_SPLIT_METHOD', payload: 'itemized' });
+                  // ล้าง participants assignment เมื่อเลือก itemized
+                  const clearedFoodItems = state.foodItems.map(item => ({
+                    ...item,
+                    participants: []
+                  }));
+                  dispatch({ type: 'SET_FOOD_ITEMS', payload: clearedFoodItems });
                 }}
-                className="h-4 w-4 text-primary border-border focus:ring-primary cursor-pointer mt-0.5"
+                className="h-5 w-5 text-primary border-gray-300 focus:ring-primary cursor-pointer mt-0.5"
               />
-              <div className="ml-3">
-                <span className="block text-sm font-medium">หารตามรายการที่สั่ง</span>
-                <span className="block text-xs text-gray-500 mt-1">แบ่งค่าอาหารตามรายการที่แต่ละคนสั่ง คุณต้องเลือกว่าใครกินอะไรบ้าง</span>
+              <div className="ml-4 flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="block text-base font-medium text-gray-900">หารตามรายการที่สั่ง</span>
+                  {state.splitMethod === 'itemized' && (
+                    <Badge variant="default" className="ml-2">เลือกแล้ว</Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mt-1 mb-3">
+                  แบ่งค่าอาหารตามรายการที่แต่ละคนสั่ง จะมีขั้นตอนให้เลือกว่าใครกินอะไรบ้าง
+                </p>
+                
+                {/* Preview สำหรับ Itemized Split */}
+                {state.splitMethod === 'itemized' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mt-2">
+                    <div className="text-sm text-amber-700">
+                      <div className="flex items-center space-x-1 mb-1">
+                        <Info className="w-4 h-4" />
+                        <span className="font-medium">ขั้นตอนถัดไป:</span>
+                      </div>
+                      <p>จะได้เลือกว่าใครกินรายการอาหารไหนบ้าง เพื่อคำนวณจำนวนที่ต้องจ่ายของแต่ละคน</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </label>
           </div>
         </div>
         
-        {state.splitMethod === 'itemized' && (
-          <>
-            <div className="mt-3 bg-blue-50 border border-blue-100 rounded-md p-3 text-sm text-blue-700">
-              <p className="flex items-start">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <span>เลือกว่าใครกินรายการอาหารไหนบ้าง โดยทำเครื่องหมายในช่องผู้ที่กินอาหารในรายการนั้นๆ</span>
-              </p>
-            </div>
-            
-            <div className="space-y-4 mt-4">
-              <h3 className="text-lg font-medium">รายการอาหารทั้งหมด</h3>
-              
-              {state.foodItems.length > 0 ? (
-                state.foodItems.map((item, index) => (
-                  <div key={item.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="flex flex-col space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">{item.name || `รายการที่ ${index + 1}`}</h4>
-                        <span className="font-medium">{item.price} บาท</span>
-                      </div>
-                      
-                      <div className="mt-2">
-                        <p className="text-sm text-gray-600 mb-2">เลือกผู้ที่รับประทานรายการนี้:</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {state.participants.map(participant => (
-                            <label key={participant.id} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-md hover:bg-gray-100 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={item.participants.includes(participant.id)}
-                                onChange={(e) => {
-                                  const updatedParticipants = e.target.checked
-                                    ? [...item.participants, participant.id]
-                                    : item.participants.filter(id => id !== participant.id);
-                                  
-                                  dispatch({
-                                    type: 'UPDATE_FOOD_ITEM',
-                                    payload: { ...item, participants: updatedParticipants }
-                                  });
-                                }}
-                                className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
-                              />
-                              <span className="text-sm">{participant.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
+        {/* คำแนะนำเพิ่มเติม */}
+        {state.splitMethod && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 className="font-medium text-gray-800 mb-2">คำแนะนำ:</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              {state.splitMethod === 'equal' ? (
+                <>
+                  <li>• เหมาะสำหรับการไปกินข้าวที่ทุกคนทานร่วมกัน</li>
+                  <li>• ง่าย รวดเร็ว ไม่ต้องคำนวณซับซ้อน</li>
+                  <li>• ไม่ต้องจำใครกินอะไรบ้าง</li>
+                </>
               ) : (
-                <div className="text-center py-6 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">ไม่มีรายการอาหาร โปรดย้อนกลับไปเพิ่มรายการก่อน</p>
-                </div>
+                <>
+                  <li>• เหมาะสำหรับการไปกินข้าวที่แต่ละคนสั่งของคนละอย่าง</li>
+                  <li>• ยุติธรรม แต่ละคนจ่ายเฉพาะที่ตัวเองกิน</li>
+                  <li>• ต้องจำว่าใครกินอะไรบ้าง</li>
+                </>
               )}
-            </div>
-          </>
+            </ul>
+          </div>
         )}
       </CardContent>
     </>

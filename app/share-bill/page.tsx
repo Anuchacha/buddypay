@@ -8,13 +8,14 @@ import { Button } from '../components/ui/Button';
 import { Stepper } from '@/app/components/ui/Stepper';
 import generatePayload from 'promptpay-qr';
 import { billReducer } from '../reducers/billReducer';
-import { initialState, BILL_STEPS } from '../lib/billTypes';
+import { initialState } from '../lib/billTypes';
 import { useBillManagement } from '../hooks/useBillManagement';
 
 // แยก components ตาม step
 import ParticipantsStep from '../components/BillSteps/ParticipantsStep';
 import FoodItemsStep from '../components/BillSteps/FoodItemsStep';
 import SplitMethodStep from '../components/BillSteps/SplitMethodStep';
+import FoodParticipantsStep from '../components/BillSteps/FoodParticipantsStep';
 import BillDetailsStep from '../components/BillSteps/BillDetailsStep';
 import ResultStep from '../components/BillSteps/ResultStep';
 
@@ -32,7 +33,6 @@ export default function ShareBillPage() {
     qrPayload,
     setQrPayload,
     currentStep,
-
     isLoading,
     error,
     notes,
@@ -47,13 +47,57 @@ export default function ShareBillPage() {
     goToNextStep,
     goToPreviousStep,
     goToStep,
-
     // กลุ่มผู้เข้าร่วม
     savedGroups,
-
     saveParticipantGroup,
     loadParticipantGroup
   } = useBillManagement(state, dispatch);
+
+  // สร้าง dynamic steps ตาม splitMethod
+  const getStepsForDisplay = () => {
+    const baseSteps = [
+      { title: 'ผู้ร่วมบิล', description: 'ใส่ชื่อผู้ร่วมบิล' },
+      { title: 'รายการอาหาร', description: 'ใส่รายการอาหาร' },
+      { title: 'วิธีหาร', description: 'เลือกวิธีหารบิล' }
+    ];
+
+    if (state.splitMethod === 'itemized') {
+      return [
+        ...baseSteps,
+        { title: 'จัดสรรรายการ', description: 'เลือกผู้กินแต่ละรายการ' },
+        { title: 'ข้อมูลบิล', description: 'ตั้งชื่อและรายละเอียด' },
+        { title: 'ผลลัพธ์', description: 'สรุปการหารบิล' }
+      ];
+    } else {
+      return [
+        ...baseSteps,
+        { title: 'ข้อมูลบิล', description: 'ตั้งชื่อและรายละเอียด' },
+        { title: 'ผลลัพธ์', description: 'สรุปการหารบิล' }
+      ];
+    }
+  };
+
+  // แปลง currentStep สำหรับการแสดงผล
+  const getDisplayStep = () => {
+    if (state.splitMethod === 'equal') {
+      // สำหรับ equal split: 0,1,2,4,5 -> 0,1,2,3,4
+      if (currentStep <= 2) return currentStep;
+      if (currentStep === 4) return 3;
+      if (currentStep === 5) return 4;
+    }
+    return currentStep;
+  };
+
+  // แปลง display step กลับเป็น actual step
+  const getActualStep = (displayStep: number) => {
+    if (state.splitMethod === 'equal') {
+      // สำหรับ equal split: 0,1,2,3,4 -> 0,1,2,4,5
+      if (displayStep <= 2) return displayStep;
+      if (displayStep === 3) return 4;
+      if (displayStep === 4) return 5;
+    }
+    return displayStep;
+  };
 
   // useEffect สำหรับการโหลดข้อมูลเริ่มต้น
   useEffect(() => {
@@ -142,12 +186,13 @@ export default function ShareBillPage() {
           {/* เพิ่ม Stepper */}
           <div className="mb-8">
             <Stepper 
-              steps={BILL_STEPS} 
-              activeStep={currentStep} 
-              onStepClick={(step) => {
+              steps={getStepsForDisplay()} 
+              activeStep={getDisplayStep()} 
+              onStepClick={(displayStep) => {
                 // อนุญาตให้ย้อนกลับไป step ก่อนหน้าได้ แต่ไม่อนุญาตให้ข้าม step ไปข้างหน้า
-                if (step < currentStep) {
-                  goToStep(step);
+                if (displayStep < getDisplayStep()) {
+                  const actualStep = getActualStep(displayStep);
+                  goToStep(actualStep);
                 }
               }}
               className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
@@ -185,7 +230,7 @@ export default function ShareBillPage() {
           <div className="space-y-6">
             <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden rounded-lg border border-gray-200">
               {/* แสดงเนื้อหาตาม step ปัจจุบัน */}
-              {currentStep === 0 && (
+              {getDisplayStep() === 0 && (
                 <ParticipantsStep 
                   state={state}
                   handleRemoveParticipant={handleRemoveParticipant}
@@ -196,7 +241,7 @@ export default function ShareBillPage() {
                 />
               )}
 
-              {currentStep === 1 && (
+              {getDisplayStep() === 1 && (
                 <FoodItemsStep
                   state={state}
                   handleRemoveFoodItem={handleRemoveFoodItem}
@@ -204,14 +249,21 @@ export default function ShareBillPage() {
                 />
               )}
 
-              {currentStep === 2 && (
+              {getDisplayStep() === 2 && (
                 <SplitMethodStep
                   state={state}
                   dispatch={dispatch}
                 />
               )}
 
-              {currentStep === 3 && (
+              {getDisplayStep() === 3 && state.splitMethod === 'itemized' && (
+                <FoodParticipantsStep
+                  state={state}
+                  dispatch={dispatch}
+                />
+              )}
+
+              {(getDisplayStep() === 4 || (getDisplayStep() === 3 && state.splitMethod === 'equal')) && (
                 <BillDetailsStep
                   state={state}
                   dispatch={dispatch}
@@ -222,7 +274,7 @@ export default function ShareBillPage() {
                 />
               )}
 
-              {currentStep === 4 && (
+              {getDisplayStep() === 5 && (
                 <ResultStep
                   state={state}
                   promptPayId={promptPayId}
@@ -233,7 +285,7 @@ export default function ShareBillPage() {
 
               {/* Step navigation buttons */}
               <CardFooter className="bg-gray-50 border-t px-6 py-4 flex justify-between">
-                {currentStep > 0 ? (
+                {getDisplayStep() > 0 ? (
                   <Button 
                     onClick={goToPreviousStep} 
                     variant="outline"
@@ -248,7 +300,7 @@ export default function ShareBillPage() {
                   <div></div> // ให้ปุ่ม "ถัดไป" อยู่ด้านขวาเสมอ
                 )}
                 
-                {currentStep < BILL_STEPS.length - 1 ? (
+                {getDisplayStep() < getStepsForDisplay().length - 1 ? (
                   <Button 
                     onClick={goToNextStep} 
                     className="bg-primary hover:bg-primary/90 flex items-center gap-2"

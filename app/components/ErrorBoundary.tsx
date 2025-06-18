@@ -21,6 +21,8 @@ interface State {
  * Error Boundary เพื่อจับข้อผิดพลาดใน React Components
  */
 class ErrorBoundary extends Component<Props, State> {
+  private errorCaptured = false; // ป้องกัน recursive error
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -34,33 +36,48 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // ป้องกัน recursive error
+    if (this.errorCaptured) return;
+    this.errorCaptured = true;
+
     const { componentName = 'Unknown' } = this.props;
     
-    // บันทึก error ผ่าน Error Monitoring System
-    const errorId = captureError(error, {
-      component: `ErrorBoundary-${componentName}`,
-      action: 'Component Error',
-      page: typeof window !== 'undefined' ? window.location.pathname : '',
-      errorInfo: {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: componentName,
-      },
-    });
-
-    this.setState({ errorId });
-
-    // Log ใน development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Error Boundary]', {
-        error,
-        errorInfo,
-        componentName,
-        errorId,
+    try {
+      // บันทึก error ผ่าน Error Monitoring System
+      const errorId = captureError(error, {
+        component: `ErrorBoundary-${componentName}`,
+        action: 'Component Error',
+        page: typeof window !== 'undefined' ? window.location.pathname : '',
+        errorInfo: {
+          componentStack: errorInfo.componentStack,
+          errorBoundary: componentName,
+        },
+        fromErrorMonitoring: false, // ระบุว่าไม่ใช่จาก Error Monitoring
       });
+
+      this.setState({ errorId });
+
+      // Log ใน development โดยไม่ใช้ console.error เพื่อป้องกัน recursive
+      if (process.env.NODE_ENV === 'development') {
+        // ใช้ console.warn แทน console.error เพื่อหลีกเลี่ยง error listener
+        console.warn('[Error Boundary] Component Error Caught:', {
+          message: error.message,
+          stack: error.stack,
+          componentName,
+          errorId,
+          componentStack: errorInfo.componentStack,
+        });
+      }
+    } catch (monitoringError) {
+      // Silent fail เพื่อป้องกัน recursive error
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Error Boundary] Failed to capture error:', monitoringError);
+      }
     }
   }
 
   private handleRetry = () => {
+    this.errorCaptured = false; // Reset flag เมื่อ retry
     this.setState({ hasError: false, error: undefined, errorId: undefined });
   };
 
@@ -69,28 +86,37 @@ class ErrorBoundary extends Component<Props, State> {
     
     if (!error) return;
 
-    // ส่ง user report
-    const userReport = {
-      errorId,
-      userDescription: 'User reported error from Error Boundary',
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-    };
+    try {
+      // ส่ง user report
+      const userReport = {
+        errorId,
+        userDescription: 'User reported error from Error Boundary',
+        timestamp: new Date().toISOString(),
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'server',
+        url: typeof window !== 'undefined' ? window.location.href : 'server',
+      };
 
-    // ส่งไป API
-    fetch('/api/user-reports', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userReport),
-    }).catch(() => {
+      // ส่งไป API (non-blocking)
+      fetch('/api/user-reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userReport),
+      }).catch(() => {
+        // Silent fail
+      });
+
+      // แสดงข้อความยืนยัน
+      if (typeof window !== 'undefined') {
+        alert('รายงานข้อผิดพลาดถูกส่งแล้ว ขอบคุณสำหรับการแจ้ง');
+      }
+    } catch (reportError) {
       // Silent fail
-    });
-
-    // แสดงข้อความยืนยัน
-    alert('รายงานข้อผิดพลาดถูกส่งแล้ว ขอบคุณสำหรับการแจ้ง');
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[Error Boundary] Failed to report error:', reportError);
+      }
+    }
   };
 
   render() {
@@ -144,7 +170,11 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="mt-4 pt-4 border-t border-gray-200">
               <Button
-                onClick={() => window.location.href = '/'}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.location.href = '/';
+                  }
+                }}
                 variant="ghost"
                 className="text-sm"
               >

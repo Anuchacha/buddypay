@@ -21,13 +21,25 @@ export default function HomeClient() {
 
   useEffect(() => {
     const preloadImage = () => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = '/icon.png';
-      document.head.appendChild(link);
+      // ตรวจสอบว่าไฟล์มีอยู่จริงก่อนทำการ preload
+      const testImage = new Image();
+      testImage.onload = () => {
+        // ถ้าไฟล์มีอยู่จริง ให้ทำการ preload
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = '/icon-192x192.png';
+        document.head.appendChild(link);
+      };
+      testImage.onerror = () => {
+        // ถ้าไฟล์ไม่มี ให้ skip การ preload
+        console.log('Icon file not found, skipping preload');
+      };
+      testImage.src = '/icon-192x192.png';
     };
+    
     preloadImage();
+    
     const lcpElement = document.getElementById('main-heading');
     if (lcpElement) {
       if ('priority' in lcpElement) {
