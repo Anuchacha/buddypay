@@ -62,7 +62,9 @@ function BillDetailContent() {
       
       // ตรวจสอบว่าเป็นบิลของผู้ใช้หรือไม่
       if (billData.userId !== user.uid) {
-        console.log('Unauthorized: Bill belongs to', billData.userId, 'but current user is', user.uid);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Unauthorized: Bill belongs to', billData.userId, 'but current user is', user.uid);
+        }
         setUnauthorized(true);
         return;
       }

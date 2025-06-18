@@ -50,10 +50,14 @@ export default function UserManagement() {
     } else if (userRole !== 'admin') {
       setError('คุณไม่มีสิทธิ์เข้าถึงหน้าจัดการผู้ใช้');
       setHasPermission(false);
-      console.log('User role check failed:', currentUser, userRole);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('User role check failed:', currentUser, userRole);
+      }
     } else {
       setHasPermission(true);
-      console.log('Admin access granted:', currentUser, userRole);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Admin access granted:', currentUser, userRole);
+      }
     }
   }, [currentUser, userRole]);
 

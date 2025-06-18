@@ -141,14 +141,18 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         
         // ตรวจสอบว่ามีข้อมูลผู้ใช้ในระบบแล้วหรือไม่
         if (userDoc.exists()) {
-          console.log('User already exists in Firestore');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('User already exists in Firestore');
+          }
           // อัพเดทเฉพาะข้อมูลที่จำเป็น แต่ไม่เปลี่ยน role ที่มีอยู่แล้ว
           await updateDoc(userRef, {
             lastLogin: new Date()
           });
         } else {
           // ถ้ายังไม่มีข้อมูลผู้ใช้ ให้สร้างใหม่พร้อมกำหนด role เป็น 'user'
-          console.log('Creating new user in Firestore');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Creating new user in Firestore');
+          }
           await setDoc(userRef, {
             uid: result.user.uid,
             email: result.user.email,
@@ -164,7 +168,9 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
         // ดึงข้อมูล role ล่าสุดจาก Firestore
         const updatedUserDoc = await getDoc(userRef);
         if (updatedUserDoc.exists()) {
-          console.log('User role after sign in:', updatedUserDoc.data().role);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('User role after sign in:', updatedUserDoc.data().role);
+          }
         }
       }
       
@@ -188,15 +194,21 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   // ฟังก์ชันดึงข้อมูล role ของผู้ใช้จาก Firestore
   const getUserRole = async (uid: string): Promise<string> => {
     try {
-      console.log('Getting user role for uid:', uid);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Getting user role for uid:', uid);
+      }
       const userDoc = await getDoc(doc(db, 'users', uid));
       
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        console.log('User data from Firestore:', userData);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User data from Firestore:', userData);
+        }
         return userData.role || 'user';
       } else {
-        console.log('User document not found in Firestore');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User document not found in Firestore');
+        }
       }
       return 'user'; // ถ้าไม่พบข้อมูลให้คืนค่าเป็น user
     } catch (error) {

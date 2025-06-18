@@ -71,11 +71,15 @@ export function useBillManagement(state: BillState, dispatch: React.Dispatch<any
       
       // ตรวจสอบการหมดอายุของแคช
       if (Date.now() > expiry) {
-        console.log('Cache expired, fetching new data');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Cache expired, fetching new data');
+        }
         return null;
       }
       
-      console.log('Using cached bills data');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using cached bills data');
+      }
       return data;
     } catch (error) {
       console.error('Error getting cached bills:', error);

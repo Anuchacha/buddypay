@@ -20,6 +20,9 @@ app.prepare().then(() => {
 
   // เริ่มเซิร์ฟเวอร์
   server.listen(3000, () => {
-    console.log('Server is running at https://localhost:3000');
+    // Server logging ใน development เท่านั้น
+if (process.env.NODE_ENV === 'development') {
+  console.log('Server is running at https://localhost:3000');
+}
   });
 });

@@ -33,19 +33,27 @@ export default function AdminDashboardPage() {
     
     if (!loading) {
       setIsLoading(false);
-      console.log('User:', user?.email);
-      console.log('User Role from Auth Context:', userRole);
-      console.log('User Role from Session Storage:', sessionRole);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('User:', user?.email);
+        console.log('User Role from Auth Context:', userRole);
+        console.log('User Role from Session Storage:', sessionRole);
+      }
       
       if (!user) {
-        console.log('Access denied: user is not logged in');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Access denied: user is not logged in');
+        }
         router.push('/login');
       } else if (userRole !== 'admin' && !isSessionAdmin) {
-        console.log('Access denied: user=', user?.email, 'role=', userRole);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Access denied: user=', user?.email, 'role=', userRole);
+        }
         alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         router.push('/');
       } else {
-        console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
+        }
       }
     }
   }, [user, userRole, loading, router]);
@@ -62,7 +70,9 @@ export default function AdminDashboardPage() {
           ?.split('=')[1];
         
         if (cookieRole !== 'admin') {
-          console.log('Initial check - Not admin, redirecting...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Initial check - Not admin, redirecting...');
+          }
           router.push('/');
           return false;
         }

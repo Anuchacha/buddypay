@@ -31,6 +31,24 @@ const nextConfig = {
     // Tree-shaking สำหรับ lodash และ libraries อื่นๆ
     config.optimization.usedExports = true;
     
+    // ลบ console.log ใน production builds
+    if (process.env.NODE_ENV === 'production') {
+      config.optimization.minimizer = config.optimization.minimizer || [];
+      
+      // ใช้ Terser plugin เพื่อลบ console.log
+      const TerserPlugin = require('terser-webpack-plugin');
+      config.optimization.minimizer.push(
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true, // ลบ console.log
+              drop_debugger: true, // ลบ debugger statements
+            },
+          },
+        })
+      );
+    }
+    
     return config;
   },
   

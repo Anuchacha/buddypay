@@ -72,7 +72,9 @@ export default function BillsOverview() {
           };
         });
         
-        console.log('Bills data loaded:', billsData.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Bills data loaded:', billsData.length);
+        }
         setBills(billsData);
         applyFilters(billsData, statusFilter, searchTerm, dateFilter);
       } catch (err) {

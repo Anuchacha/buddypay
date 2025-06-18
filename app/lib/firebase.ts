@@ -57,7 +57,9 @@ export const storage = getStorage(app);
 export const debugUserRole = async (uid: string) => {
   try {
     if (!db) {
-      console.error('Firestore not initialized');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Firestore not initialized');
+      }
       return null;
     }
     
@@ -65,14 +67,20 @@ export const debugUserRole = async (uid: string) => {
     const userDoc = await getDoc(doc(db, 'users', uid));
     
     if (userDoc.exists()) {
-      console.log('DEBUG - User data from Firestore:', userDoc.data());
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - User data from Firestore:', userDoc.data());
+      }
       return userDoc.data();
     } else {
-      console.log('DEBUG - User not found in Firestore');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('DEBUG - User not found in Firestore');
+      }
       return null;
     }
   } catch (error) {
-    console.error('DEBUG - Error getting user data:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('DEBUG - Error getting user data:', error);
+    }
     return null;
   }
 };

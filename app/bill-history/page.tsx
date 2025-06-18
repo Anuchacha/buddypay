@@ -197,7 +197,9 @@ export default function BillHistory() {
       
       // ตรวจสอบว่าบิลนี้มีสถานะที่ต้องการอัพเดตอยู่แล้วหรือไม่
       if (billToUpdate.status === newStatus) {
-        console.log('Bill status is already', newStatus);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Bill status is already', newStatus);
+        }
         return;
       }
 
@@ -338,7 +340,9 @@ export default function BillHistory() {
   // ฟังก์ชันโหลดข้อมูลเพิ่มเติม
   const loadMore = () => {
     if (loading || !hasMore) return;
-    console.log('Loading page:', page + 1); // Log current page for debugging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Loading page:', page + 1); // Log current page for debugging
+    }
     setPage(prev => prev + 1);
     fetchBills(false);
   };

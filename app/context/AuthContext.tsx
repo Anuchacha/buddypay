@@ -50,7 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ตรวจสอบสถานะการล็อกอินเมื่อคอมโพเนนต์โหลด
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed. User:", user?.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Auth state changed. User:", user?.email);
+      }
       setUser(user);
       setLoading(false);
       
@@ -58,11 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           Cookies.set('firebase-session', 'true', { secure: true, sameSite: 'strict' });
           
-          console.log("Fetching role for user:", user.uid);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Fetching role for user:", user.uid);
+          }
           const role = await getUserRole(user.uid);
-          console.log("Role fetched from Firebase:", role);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Role fetched from Firebase:", role);
+          }
           setUserRole(role);
-          console.log('Fetched User Role:', role);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Fetched User Role:', role);
+          }
           
           sessionStorage.setItem('userRole', role);
           Cookies.set('user-role', role, { secure: true, sameSite: 'strict' });
