@@ -241,7 +241,6 @@ export default function ResultStep({
           }))}
           billTitle={state.billName}
           billDate={new Date()}
-          billId="0001"
           vat={state.vat}
           discount={state.discount}
           serviceCharge={state.serviceCharge}

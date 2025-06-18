@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { SplitResult } from '../lib/billCalculator';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { 
   Printer, 
   Download, 
-  Loader2, 
   User, 
   Users, 
   Receipt, 
@@ -39,7 +38,6 @@ type BillSummaryProps = {
   totalAmount?: number;
   billTitle?: string;
   billDate?: Date;
-  billId?: string;
   ownerName?: string;
   items?: BillItem[];
   vat?: number;
@@ -70,7 +68,6 @@ export default function BillSummary({
   totalAmount: propTotalAmount,
   billTitle = "BUDDYPAY",
   billDate = new Date(),
-  billId = "0001",
   ownerName = "",
   items = [],
   vat = 0,
@@ -82,8 +79,6 @@ export default function BillSummary({
   notes
 }: BillSummaryProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [moduleError, setModuleError] = useState<string | null>(null);
   
   // ใช้แค่ results หรือ splitResults อันใดอันหนึ่ง
   const finalResults = results || splitResults || [];
@@ -174,32 +169,14 @@ export default function BillSummary({
         <button 
           onClick={downloadAsImage} 
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
-          disabled={isDownloading || !!moduleError}
           aria-label="ดาวน์โหลดใบเสร็จเป็นรูปภาพ"
         >
-          {isDownloading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              <span>กำลังดาวน์โหลด...</span>
-            </>
-          ) : (
-            <>
-              <Download size={16} />
-              <span>บันทึกเป็นรูปภาพ</span>
-            </>
-          )}
+          <Download size={16} />
+          <span>บันทึกเป็นรูปภาพ</span>
         </button>
       </div>
       
-      {/* แสดงข้อผิดพลาด */}
-      {moduleError && (
-        <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
-          <p className="flex items-center">
-            <AlertCircle size={16} className="mr-2" />
-            {moduleError}
-          </p>
-        </div>
-      )}
+
       
       {/* สรุปบิล */}
       <div 
