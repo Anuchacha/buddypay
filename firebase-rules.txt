@@ -1,19 +1,16 @@
-// Firestore Rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ผู้ใช้ต้องเข้าสู่ระบบเพื่อเข้าถึงข้อมูล
+    // ปิดการเข้าถึงทั้งหมดเป็นค่าเริ่มต้น
     match /{document=**} {
-      allow read, write: if false; // ปิดการเข้าถึงทั้งหมดเป็นค่าเริ่มต้น
+      allow read, write: if false;
     }
     
     // Bills collection
     match /bills/{billId} {
-      // อนุญาตให้อ่านบิลเฉพาะเจ้าของหรือผู้เข้าร่วม
+      // อนุญาตให้อ่านบิลเฉพาะเจ้าของ
       allow read: if request.auth != null && 
-        (resource.data.userId == request.auth.uid || 
-         existsIn(request.auth.uid, resource.data.participants[*].id) ||
-         getParticipantIds().hasAny([request.auth.uid]));
+        resource.data.userId == request.auth.uid;
       
       // อนุญาตให้สร้างบิลใหม่เฉพาะผู้ใช้ที่ล็อกอิน และต้องระบุ userId เป็นของตัวเอง
       allow create: if request.auth != null && 
@@ -26,16 +23,6 @@ service cloud.firestore {
       // อนุญาตให้ลบบิลเฉพาะเจ้าของ
       allow delete: if request.auth != null && 
         resource.data.userId == request.auth.uid;
-
-      // ฟังก์ชันช่วยในการตรวจสอบว่า UID อยู่ในรายชื่อผู้เข้าร่วมหรือไม่
-      function getParticipantIds() {
-        return resource.data.participants.map(p => p.id);
-      }
-      
-      // ฟังก์ชันตรวจสอบว่า ID มีอยู่ในอาร์เรย์หรือไม่
-      function existsIn(id, array) {
-        return id in array;
-      }
     }
     
     // Users collection
@@ -47,14 +34,47 @@ service cloud.firestore {
     
     // Categories collection (public read, admin write)
     match /categories/{categoryId} {
-      allow read: if true; // ใครก็สามารถอ่านได้
-      allow write: if false; // ไม่อนุญาตให้แก้ไข (ควรทำผ่าน Admin SDK)
+      allow read: if true;
+      allow write: if false;
     }
     
     // Settings collection (public read, admin write)
     match /settings/{settingId} {
-      allow read: if true; // ใครก็สามารถอ่านได้
-      allow write: if false; // ไม่อนุญาตให้แก้ไข (ควรทำผ่าน Admin SDK)
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Temporary shared bills collection (สำหรับลิงค์แชร์ชั่วคราว)
+    match /temporary_shared_bills/{shareId} {
+      // อนุญาตให้ทุกคนอ่านได้ (เพื่อแชร์บิล)
+      allow read: if true;
+      
+      // อนุญาตให้สร้างได้โดยไม่ต้องล็อกอิน (สำหรับสร้างลิงค์แชร์ชั่วคราว)
+      allow create: if true;
+      
+      // ไม่อนุญาตให้แก้ไขหรือลบ (จะถูกลบอัตโนมัติเมื่อหมดอายุ)
+      allow update, delete: if false;
+    }
+    
+    // Shared bills collection
+    match /shared_bills/{shareId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Participant groups collection
+    match /participantGroups/{groupId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Activity logs collection
+    match /activityLogs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
     }
   }
 } 

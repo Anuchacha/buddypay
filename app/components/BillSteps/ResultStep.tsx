@@ -1,25 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { BillState } from '../../lib/billTypes';
-import { User, ChevronDown, ChevronUp, Utensils, CreditCard, FileText, DollarSign, AlertCircle, Calendar, Users } from 'lucide-react';
+import { User, ChevronDown, ChevronUp, Utensils, CreditCard, FileText, DollarSign, AlertCircle, Calendar, Users, Share2, Copy, Check, UserPlus, Save } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
+import { useAuth } from '../../context/AuthContext';
 
 interface ResultStepProps {
   state: BillState;
   promptPayId: string;
   qrPayload: string;
   notes: string;
+  isSharedView?: boolean;
+  existingShareUrl?: string;
 }
 
 export default function ResultStep({
   state,
   promptPayId,
   qrPayload,
-  notes
+  notes,
+  isSharedView = false,
+  existingShareUrl = ''
 }: ResultStepProps) {
+  const { isAuthenticated } = useAuth();
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  
+  // States สำหรับการแชร์ลิงค์
+  const [shareUrl, setShareUrl] = useState<string>('');
+  const [isSharing, setIsSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // ตั้งค่า shareUrl เมื่ออยู่ในโหมดแชร์
+  useEffect(() => {
+    if (isSharedView && existingShareUrl) {
+      setShareUrl(existingShareUrl);
+    }
+  }, [isSharedView, existingShareUrl]);
 
   // Debug logging
   console.log('ResultStep - state:', state);
@@ -33,6 +53,103 @@ export default function ResultStep({
       ...prev,
       [participantId]: !prev[participantId]
     }));
+  };
+
+  // ฟังก์ชันสร้างลิงค์แชร์
+  const handleCreateShareLink = async () => {
+    // ถ้าอยู่ในโหมดแชร์ ให้ใช้ลิงค์เดิม
+    if (isSharedView && existingShareUrl) {
+      setShareUrl(existingShareUrl);
+      console.log('Using existing share URL:', existingShareUrl);
+      return;
+    }
+    
+    setIsSharing(true);
+    try {
+      console.log('Creating share link...');
+      
+      // ตรวจสอบข้อมูลที่จำเป็น
+      if (!state.billName || !state.participants || state.participants.length === 0) {
+        alert('ข้อมูลบิลไม่สมบูรณ์ กรุณาตรวจสอบข้อมูลอีกครั้ง');
+        return;
+      }
+      
+      const dataToSend = {
+        ...state,
+        promptPayId,
+        qrPayload,
+        notes
+      };
+      console.log('Data to send:', dataToSend);
+      
+      const response = await fetch('/api/share/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSend)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('API Response:', result);
+      
+      if (result.success && result.shareUrl) {
+        setShareUrl(result.shareUrl);
+        console.log('Share link created successfully:', result.shareUrl);
+        
+        // แสดง prompt สำหรับการเก็บบิลถาวร (ถ้าไม่ได้ล็อกอิน)
+        if (!isAuthenticated) {
+          setShowSavePrompt(true);
+        }
+      } else {
+        console.error('Failed to create share link:', result.error || 'Unknown error');
+        throw new Error(result.error || 'ไม่ได้รับ URL แชร์จากเซิร์ฟเวอร์');
+      }
+    } catch (error) {
+      console.error('Error creating share link:', error);
+      
+      let errorMessage = 'เกิดข้อผิดพลาดในการสร้างลิงค์แชร์';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อเครือข่าย';
+      } else if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // ฟังก์ชันคัดลอกลิงค์
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
+  };
+
+  // ฟังก์ชันบันทึกบิลถาวร
+  const handleSavePermanent = async () => {
+    setIsSaving(true);
+    try {
+      // TODO: ต้องใช้ authentication context หรือ modal
+      alert('กำลังพัฒนาฟีเจอร์นี้ในอนาคต!');
+      setShowSavePrompt(false);
+    } catch (error) {
+      console.error('Failed to save bill permanently:', error);
+      alert('ไม่สามารถบันทึกบิลได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // คำนวณรายละเอียดการจ่ายเงินของแต่ละคน
@@ -149,6 +266,8 @@ export default function ResultStep({
             </div>
           </div>
         </div>
+
+
 
         <div className="bg-green-50 border border-green-100 rounded-md p-3 mb-5 text-sm text-green-700">
           <p className="flex items-center">
@@ -422,6 +541,137 @@ export default function ResultStep({
               </div>
             </div>
           )}
+          
+          {/* ส่วนแชร์ลิงค์ - ตำแหน่งใหม่ (ท้ายสุด) */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl border border-indigo-200 p-6">
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-gray-800 mb-2 flex items-center justify-center">
+                  <Share2 className="w-6 h-6 mr-2 text-indigo-600" />
+                  แชร์ผลลัพธ์ให้เพื่อน
+                </h3>
+                                 <p className="text-gray-600 mb-6">
+                  {isSharedView 
+                    ? 'คุณกำลังดูลิงค์แชร์นี้อยู่ สามารถคัดลอกลิงค์เพื่อส่งต่อได้' 
+                    : 'ส่งลิงค์ผลลัพธ์การหารบิลให้เพื่อนๆ ดู (หมดอายุอัตโนมัติใน 24 ชั่วโมง)'
+                  }
+                </p>
+                
+                {!shareUrl ? (
+                  <button
+                    onClick={handleCreateShareLink}
+                    disabled={isSharing}
+                    className="bg-indigo-600 text-white px-8 py-3 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center mx-auto transition-all duration-200 transform hover:scale-105 disabled:transform-none shadow-lg"
+                  >
+                    {isSharing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                        กำลังสร้างลิงค์แชร์...
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-5 h-5 mr-3" />
+                        {isSharedView ? '🔗 แสดงลิงค์นี้' : '🔗 สร้างลิงค์แชร์'}
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="bg-white rounded-lg p-4 border border-indigo-300">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="bg-green-100 rounded-full p-2 mr-3">
+                        <Check className="w-5 h-5 text-green-600" />
+                      </div>
+                      <span className="text-green-700 font-medium">✅ ลิงค์แชร์พร้อมใช้งาน!</span>
+                    </div>
+                    
+                    <div className="flex gap-3 mb-3">
+                      <input
+                        type="text"
+                        value={shareUrl}
+                        readOnly
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm focus:outline-none"
+                      />
+                      <button
+                        onClick={handleCopyLink}
+                        className={`px-6 py-2 rounded-lg flex items-center transition-all duration-200 font-medium ${
+                          copied 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
+                      >
+                        {copied ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            คัดลอกแล้ว!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-2" />
+                            คัดลอกลิงค์
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    
+                                         <div className="text-xs text-gray-500 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                       💡 <strong>วิธีใช้:</strong> ส่งลิงค์นี้ในแชท Line, Facebook หรือ WhatsApp ให้เพื่อนๆ เพื่อดูผลลัพธ์การหารบิล
+                     </div>
+                   </div>
+                 )}
+               </div>
+             </div>
+             
+             {/* Prompt สำหรับการเก็บบิลถาวร */}
+             {showSavePrompt && shareUrl && !isAuthenticated && (
+               <div className="mt-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6">
+                 <div className="text-center">
+                   <div className="mb-4">
+                     <div className="bg-green-100 rounded-full p-3 inline-block mb-3">
+                       <Save className="w-6 h-6 text-green-600" />
+                     </div>
+                     <h3 className="text-lg font-bold text-gray-800 mb-2">
+                       💾 อยากเก็บบิลนี้ไว้มั้ย?
+                     </h3>
+                     <p className="text-gray-600 mb-4">
+                       ลิงค์นี้จะหายไปใน <strong>24 ชั่วโมง</strong><br/>
+                       ล็อกอินเพื่อเก็บบิลไว้ในประวัติ <strong>ไม่หายไปไหน!</strong>
+                     </p>
+                   </div>
+                   
+                   <div className="flex gap-3 justify-center">
+                     <button
+                       onClick={handleSavePermanent}
+                       disabled={isSaving}
+                       className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center transition-colors"
+                     >
+                       {isSaving ? (
+                         <>
+                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                           กำลังบันทึก...
+                         </>
+                       ) : (
+                         <>
+                           <UserPlus className="w-4 h-4 mr-2" />
+                           🔒 ล็อกอินและเก็บบิล
+                         </>
+                       )}
+                     </button>
+                     
+                     <button
+                       onClick={() => setShowSavePrompt(false)}
+                       className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
+                     >
+                       ไม่เป็นไร ใช้ชั่วคราวพอ
+                     </button>
+                   </div>
+                   
+                   <div className="mt-4 text-xs text-gray-500 bg-white/50 p-3 rounded-lg">
+                     ⭐ <strong>ข้อดีของการล็อกอิน:</strong> เก็บประวัติบิล, แก้ไขได้, สร้างกลุ่มเพื่อน, ไม่มีวันหมดอายุ
+                   </div>
+                 </div>
+               </div>
+             )}
+           </div>
         </div>
       </CardContent>
     </>
