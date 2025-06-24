@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ResultStep from '@/app/components/BillSteps/ResultStep';
 import { BillState } from '@/app/lib/billTypes';
+import { getAppUrl } from '@/app/lib/utils';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { AlertCircle, Clock, ExternalLink } from 'lucide-react';
@@ -166,7 +167,7 @@ export default function SharedBillPage() {
               qrPayload={billData.qrPayload || ''}
               notes={billData.notes || ''}
               isSharedView={true}
-              existingShareUrl={`${window.location.origin}/share/${params.id}`}
+              existingShareUrl={`${getAppUrl()}/share/${params.id}`}
             />
           </div>
 

@@ -7,4 +7,20 @@ import { twMerge } from 'tailwind-merge';
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-} 
+}
+
+// Get production URL (for share links)
+export const getAppUrl = (): string => {
+  // ใน production ให้ใช้ environment variable
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // ใน development หรือ fallback ให้ใช้ window.location
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  
+  // Server-side fallback
+  return 'https://buddypay.vercel.app';
+}; 

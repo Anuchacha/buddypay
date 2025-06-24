@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.log('Temp share created:', shareId);
     
     // สร้าง URL สำหรับแชร์
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://buddypay.vercel.app';
     const shareUrl = `${baseUrl}/share/${shareId}`;
     
     return NextResponse.json({
