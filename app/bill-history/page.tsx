@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import LoginPrompt from '../components/LoginPrompt';
 import { mockBills } from '../lib/mockData';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/app/components/ui/Card';
-import { Users, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { CategoryIcon } from '@/CategorySelect';
 
@@ -22,7 +22,8 @@ import {
   startAfter,
   onSnapshot,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  deleteDoc
 } from 'firebase/firestore';
 
 import { Button } from '@/app/components/ui/Button';
@@ -43,6 +44,7 @@ export default function BillHistory() {
   const [hasMore, setHasMore] = useState(true);
   const [bills, setBills] = useState<any[]>([]);
   const [isRealtime, setIsRealtime] = useState(false);
+  const [deletingBillId, setDeletingBillId] = useState<string | null>(null);
   
   // ฟังก์ชันสำหรับแคชข้อมูลบิล
   const cacheBills = async (bills: any[]) => {
@@ -422,6 +424,42 @@ export default function BillHistory() {
     return 'ไม่ระบุวันที่';
   };
   
+  // ฟังก์ชันลบบิล
+  const deleteBill = async (billId: string, billName: string) => {
+    if (!isAuthenticated || !user) {
+      alert("กรุณาเข้าสู่ระบบเพื่อลบบิล");
+      return;
+    }
+
+    // ยืนยันการลบ
+    const isConfirmed = window.confirm(
+      `คุณต้องการลบบิล "${billName}" หรือไม่?\n\nการดำเนินการนี้ไม่สามารถย้อนกลับได้`
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      setDeletingBillId(billId);
+
+      // ลบบิลจาก Firestore
+      await deleteDoc(doc(db, 'bills', billId));
+
+      // อัพเดต state โดยลบบิลออกจากรายการ
+      setBills(prevBills => prevBills.filter(bill => bill.id !== billId));
+
+      // ลบจากแคชด้วย
+      const remainingBills = bills.filter(bill => bill.id !== billId);
+      await cacheBills(remainingBills);
+
+      alert("ลบบิลสำเร็จ");
+    } catch (error) {
+      console.error('Error deleting bill:', error);
+      alert("เกิดข้อผิดพลาดในการลบบิล กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setDeletingBillId(null);
+    }
+  };
+
   // Toggle real-time updates
 
 
@@ -458,8 +496,15 @@ export default function BillHistory() {
             {bills.map((bill) => (
               <Card 
                 key={bill.id} 
-                className={`hover:shadow-md transition-shadow ${isAuthenticated ? 'cursor-pointer' : 'cursor-not-allowed opacity-90'}`}
+                className={`hover:shadow-md transition-shadow ${
+                  deletingBillId === bill.id 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : isAuthenticated 
+                      ? 'cursor-pointer' 
+                      : 'cursor-not-allowed opacity-90'
+                }`}
                 onClick={() => {
+                  if (deletingBillId === bill.id) return; // ป้องกันการคลิกขณะลบ
                   if (isAuthenticated) {
                     router.push(`/bill/${bill.id}`);
                   } else {
@@ -471,9 +516,32 @@ export default function BillHistory() {
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-lg flex-1 truncate">{bill.name}</CardTitle>
-                    {bill.categoryId && (
-                      <CategoryIcon id={bill.categoryId} showName={true} size={20} />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {bill.categoryId && (
+                        <CategoryIcon id={bill.categoryId} showName={true} size={20} />
+                      )}
+                      {isAuthenticated && bill.userId === user?.uid && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteBill(bill.id, bill.name);
+                          }}
+                          className={`p-1 rounded transition-colors ${
+                            deletingBillId === bill.id 
+                              ? 'text-gray-400 cursor-not-allowed' 
+                              : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
+                          }`}
+                          title={deletingBillId === bill.id ? "กำลังลบ..." : "ลบบิล"}
+                          disabled={deletingBillId === bill.id}
+                        >
+                          {deletingBillId === bill.id ? (
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Trash2 size={16} />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
                     {formatDate(bill.createdAt)}
