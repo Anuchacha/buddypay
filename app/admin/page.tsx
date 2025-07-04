@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/Card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
+import { PageLoader } from '@/app/components/ui/PageLoader';
 import { 
   UserRound, 
   LineChart, 
@@ -32,28 +33,28 @@ export default function AdminDashboardPage() {
     const isSessionAdmin = sessionRole === 'admin';
     
     if (!loading) {
-      setIsLoading(false);
+            setIsLoading(false);
       if (process.env.NODE_ENV === 'development') {
         console.log('User:', user?.email);
         console.log('User Role from Auth Context:', userRole);
         console.log('User Role from Session Storage:', sessionRole);
       }
       
-      if (!user) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Access denied: user is not logged in');
-        }
+              if (!user) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Access denied: user is not logged in');
+          }
         router.push('/login');
-      } else if (userRole !== 'admin' && !isSessionAdmin) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Access denied: user=', user?.email, 'role=', userRole);
-        }
+              } else if (userRole !== 'admin' && !isSessionAdmin) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Access denied: user=', user?.email, 'role=', userRole);
+          }
         alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         router.push('/');
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
-        }
+              } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
+          }
       }
     }
   }, [user, userRole, loading, router]);
@@ -87,12 +88,10 @@ export default function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-          <p className="mt-4 text-xl">กำลังโหลด...</p>
-        </div>
-      </div>
+      <PageLoader 
+        message="กำลังตรวจสอบสิทธิ์..." 
+        overlay={true}
+      />
     );
   }
 

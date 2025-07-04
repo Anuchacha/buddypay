@@ -1,7 +1,7 @@
 import { CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { BillState } from '../../lib/billTypes';
-import { CategorySelect } from '../../../CategorySelect';
+import { CategorySelect } from '../CategorySelect';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Info, Receipt, Tag, FileText } from 'lucide-react';
@@ -156,23 +156,25 @@ export default function BillDetailsStep({
                   )}
                   
                   {/* ตัวเลือกหมวดหมู่ */}
-                  <div className="p-2 border-b border-gray-100 flex items-center overflow-x-auto no-scrollbar">
-                    <button
-                      onClick={() => setSelectedCategory(null)}
-                      className={`flex items-center px-3 py-1.5 mr-1.5 rounded-full text-xs whitespace-nowrap ${!selectedCategory ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-                    >
-                      ทั้งหมด
-                    </button>
-                    {categories.map((category, index) => (
+                  <div className="p-2 border-b border-gray-100">
+                    <div className="flex items-center overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-1">
                       <button
-                        key={`cat-${index}`}
-                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
-                        className={`flex items-center px-3 py-1.5 mr-1.5 rounded-full text-xs whitespace-nowrap ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        onClick={() => setSelectedCategory(null)}
+                        className={`flex items-center px-3 py-1.5 mr-2 rounded-full text-xs whitespace-nowrap flex-shrink-0 ${!selectedCategory ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
                       >
-                        <Tag size={10} className="mr-1" />
-                        {category}
+                        ทั้งหมด
                       </button>
-                    ))}
+                      {categories.map((category, index) => (
+                        <button
+                          key={`cat-${index}`}
+                          onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                          className={`flex items-center px-3 py-1.5 mr-2 rounded-full text-xs whitespace-nowrap flex-shrink-0 ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
+                        >
+                          <Tag size={10} className="mr-1" />
+                          {category}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   
                   {/* รายการบิลแนะนำ */}
@@ -181,7 +183,7 @@ export default function BillDetailsStep({
                       Object.entries(groupedTemplates).map(([category, items]) => (
                         <div key={`group-${category}`} className="mb-2">
                           <div className="text-xs font-medium text-gray-500 px-2 py-1 mb-1 bg-gray-50 rounded">{category}</div>
-                          <div className="grid grid-cols-2 gap-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                             {items.map((template, index) => {
                               const Icon = template.icon;
                               return (
@@ -233,7 +235,7 @@ export default function BillDetailsStep({
         <div>
           <label className="block text-sm font-medium mb-1.5 text-gray-700">หมวดหมู่</label>
           <CategorySelect 
-            selectedId={state.categoryId}
+            value={state.categoryId}
             onChange={(id) => dispatch({ type: 'SET_CATEGORY_ID', payload: id })}
           />
         </div>

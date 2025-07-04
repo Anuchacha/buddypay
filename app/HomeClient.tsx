@@ -88,10 +88,10 @@ export default function HomeClient() {
               </div>
             </div>
             <div className="md:w-1/2 flex justify-center">
-              <div className="w-80 h-80 flex flex-col items-center justify-center p-8 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-center">
-                <div className="text-8xl mb-4">💰</div>
-                <h3 className="text-2xl font-bold mb-2">คำนวณบิลง่ายๆ</h3>
-                <p className="opacity-90">แชร์ค่าใช้จ่ายกับเพื่อนอย่างเป็นธรรม ไม่มีใครได้เปรียบเสียเปรียบ</p>
+              <div className="w-72 h-72 sm:w-80 sm:h-80 flex flex-col items-center justify-center p-6 sm:p-8 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 text-center">
+                <div className="text-6xl sm:text-8xl mb-3 sm:mb-4">💰</div>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">คำนวณบิลง่ายๆ</h3>
+                <p className="opacity-90 text-sm sm:text-base">แชร์ค่าใช้จ่ายกับเพื่อนอย่างเป็นธรรม ไม่มีใครได้เปรียบเสียเปรียบ</p>
               </div>
             </div>
           </div>

@@ -13,6 +13,7 @@ import { collection, query, where, getDocs, orderBy, getFirestore } from 'fireba
 import { Category, getCategoryById, getPopularCategories } from '@/app/lib/categories';
 import { mockBills} from '@/app/lib/mockData';
 import LoginPrompt from '../components/LoginPrompt';
+import { StatisticsPageSkeleton } from '../components/SkeletonLoaders';
 
 // สีสำหรับกราฟวงกลม
 const COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
@@ -486,58 +487,58 @@ export default function StatisticsPage() {
     return (
       <>
         {/* สรุปข้อมูลทั่วไป */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-blue-500 rounded-lg text-white mr-4">
-                  <ShoppingBag size={24} />
+                <div className="p-2 bg-blue-500 rounded-lg text-white mr-3 sm:mr-4 flex-shrink-0">
+                  <ShoppingBag size={20} className="sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-blue-700">จำนวนบิลทั้งหมด</p>
-                  <h3 className="text-2xl font-bold">{stats.totalBills || 0} บิล</h3>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-blue-700">จำนวนบิลทั้งหมด</p>
+                  <h3 className="text-lg sm:text-2xl font-bold truncate">{stats.totalBills || 0} บิล</h3>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-emerald-500 rounded-lg text-white mr-4">
-                  <DollarSign size={24} />
+                <div className="p-2 bg-emerald-500 rounded-lg text-white mr-3 sm:mr-4 flex-shrink-0">
+                  <DollarSign size={20} className="sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-emerald-700">ยอดรวมทั้งหมด</p>
-                  <h3 className="text-2xl font-bold">{renderSafeAmount(stats.totalAmount)} บาท</h3>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-emerald-700">ยอดรวมทั้งหมด</p>
+                  <h3 className="text-lg sm:text-2xl font-bold truncate">{renderSafeAmount(stats.totalAmount)} บาท</h3>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-amber-50 to-amber-100">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-amber-500 rounded-lg text-white mr-4">
-                  <TrendingUp size={24} />
+                <div className="p-2 bg-amber-500 rounded-lg text-white mr-3 sm:mr-4 flex-shrink-0">
+                  <TrendingUp size={20} className="sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-amber-700">ค่าใช้จ่ายเฉลี่ย</p>
-                  <h3 className="text-2xl font-bold">{renderSafeAmount(stats.averageAmount)} บาท</h3>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-amber-700">ค่าใช้จ่ายเฉลี่ย</p>
+                  <h3 className="text-lg sm:text-2xl font-bold truncate">{renderSafeAmount(stats.averageAmount)} บาท</h3>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-purple-500 rounded-lg text-white mr-4">
-                  <Calendar size={24} />
+                <div className="p-2 bg-purple-500 rounded-lg text-white mr-3 sm:mr-4 flex-shrink-0">
+                  <Calendar size={20} className="sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-purple-700">หมวดหมู่ยอดนิยม</p>
-                  <h3 className="text-2xl font-bold">{stats.mostFrequentCategory || 'ไม่มีข้อมูล'}</h3>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-purple-700">หมวดหมู่ยอดนิยม</p>
+                  <h3 className="text-lg sm:text-2xl font-bold truncate">{stats.mostFrequentCategory || 'ไม่มีข้อมูล'}</h3>
                 </div>
               </div>
             </CardContent>
@@ -614,14 +615,14 @@ export default function StatisticsPage() {
               </div>
               
               {/* เพิ่มตัวชี้แจงสีของแต่ละหมวดหมู่ */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {categoryStats.slice(0, 6).map((entry, index) => (
-                  <div key={`legend-${index}`} className="flex items-center">
+                  <div key={`legend-${index}`} className="flex items-center min-w-0">
                     <div 
-                      className="w-3 h-3 rounded-full mr-2" 
+                      className="w-3 h-3 rounded-full mr-2 flex-shrink-0" 
                       style={{ backgroundColor: entry.color || COLORS[index % COLORS.length] }}
                     ></div>
-                    <span className="text-sm truncate">{entry.name}</span>
+                    <span className="text-xs sm:text-sm truncate">{entry.name}</span>
                   </div>
                 ))}
               </div>
@@ -630,41 +631,41 @@ export default function StatisticsPage() {
         </div>
 
         {/* การ์ดแสดงข้อมูลการชำระเงิน */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle>สถานะการชำระเงิน</CardTitle>
-              <CardDescription>ข้อมูลการชำระเงินของบิลทั้งหมด</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">สถานะการชำระเงิน</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">ข้อมูลการชำระเงินของบิลทั้งหมด</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 sm:p-6 pt-0">
               <div className="flex justify-around py-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.settledBills}</div>
-                  <div className="text-sm text-muted-foreground">ชำระแล้ว</div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.settledBills}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">ชำระแล้ว</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-amber-600">{stats.pendingBills}</div>
-                  <div className="text-sm text-muted-foreground">รอชำระ</div>
+                  <div className="text-xl sm:text-2xl font-bold text-amber-600">{stats.pendingBills}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">รอชำระ</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{calculatePercentage(stats.settledBills, stats.totalBills)}%</div>
-                  <div className="text-sm text-muted-foreground">อัตราการชำระ</div>
+                  <div className="text-xl sm:text-2xl font-bold">{calculatePercentage(stats.settledBills, stats.totalBills)}%</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">อัตราการชำระ</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>บิลที่มีมูลค่าสูงสุด</CardTitle>
-              <CardDescription>รายละเอียดบิลที่มีมูลค่าสูงที่สุด</CardDescription>
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">บิลที่มีมูลค่าสูงสุด</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">รายละเอียดบิลที่มีมูลค่าสูงที่สุด</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-2">{stats.mostExpensiveBill.title || 'ไม่มีข้อมูล'}</h3>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-bold text-base sm:text-lg mb-3 truncate">{stats.mostExpensiveBill.title || 'ไม่มีข้อมูล'}</h3>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-muted-foreground">วันที่</span>
-                  <span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">วันที่</span>
+                  <span className="text-xs sm:text-sm">
                     {stats.mostExpensiveBill.date.toLocaleDateString('th-TH', {
                       year: 'numeric',
                       month: 'long',
@@ -673,8 +674,8 @@ export default function StatisticsPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">ยอดรวม</span>
-                  <span className="font-bold text-xl">{renderSafeAmount(stats.mostExpensiveBill.amount)} บาท</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">ยอดรวม</span>
+                  <span className="font-bold text-lg sm:text-xl">{renderSafeAmount(stats.mostExpensiveBill.amount)} บาท</span>
                 </div>
               </div>
             </CardContent>
@@ -727,20 +728,7 @@ export default function StatisticsPage() {
 
   // แสดง loading state
   if (loading || (isLoading && user)) {
-    return (
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-          <div className="h-80 bg-gray-200 rounded mb-8"></div>
-          <div className="h-80 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
+    return <StatisticsPageSkeleton />;
   }
 
   // แสดง LoginPrompt สำหรับผู้ที่ไม่ได้ล็อกอิน แต่มีข้อมูลตัวอย่าง

@@ -41,12 +41,14 @@ export default function ResultStep({
     }
   }, [isSharedView, existingShareUrl]);
 
-  // Debug logging
-  console.log('ResultStep - state:', state);
-  console.log('ResultStep - splitResults:', state.splitResults);
-  console.log('ResultStep - splitMethod:', state.splitMethod);
-  console.log('ResultStep - participants:', state.participants);
-  console.log('ResultStep - foodItems:', state.foodItems);
+  // Debug logging (development only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ResultStep - state:', state);
+    console.log('ResultStep - splitResults:', state.splitResults);
+    console.log('ResultStep - splitMethod:', state.splitMethod);
+    console.log('ResultStep - participants:', state.participants);
+    console.log('ResultStep - foodItems:', state.foodItems);
+  }
 
   const toggleCard = (participantId: string) => {
     setExpandedCards(prev => ({
@@ -60,13 +62,17 @@ export default function ResultStep({
     // ถ้าอยู่ในโหมดแชร์ ให้ใช้ลิงค์เดิม
     if (isSharedView && existingShareUrl) {
       setShareUrl(existingShareUrl);
-      console.log('Using existing share URL:', existingShareUrl);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Using existing share URL:', existingShareUrl);
+      }
       return;
     }
     
     setIsSharing(true);
     try {
-      console.log('Creating share link...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating share link...');
+      }
       
       // ตรวจสอบข้อมูลที่จำเป็น
       if (!state.billName || !state.participants || state.participants.length === 0) {
@@ -80,7 +86,9 @@ export default function ResultStep({
         qrPayload,
         notes
       };
-      console.log('Data to send:', dataToSend);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Data to send:', dataToSend);
+      }
       
       const response = await fetch('/api/share/create', {
         method: 'POST',
@@ -95,11 +103,15 @@ export default function ResultStep({
       }
       
       const result = await response.json();
-      console.log('API Response:', result);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('API Response:', result);
+      }
       
       if (result.success && result.shareUrl) {
         setShareUrl(result.shareUrl);
-        console.log('Share link created successfully:', result.shareUrl);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Share link created successfully:', result.shareUrl);
+        }
         
         // แสดง prompt สำหรับการเก็บบิลถาวร (ถ้าไม่ได้ล็อกอิน)
         if (!isAuthenticated) {
@@ -156,7 +168,9 @@ export default function ResultStep({
   const getParticipantDetails = (participantId: string) => {
     const splitResult = state.splitResults?.find(result => result.participant.id === participantId);
     if (!splitResult) {
-      console.log('No split result found for participant:', participantId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('No split result found for participant:', participantId);
+      }
       return null;
     }
 
@@ -240,29 +254,29 @@ export default function ResultStep({
           </div>
           
           {/* ข้อมูลสรุป */}
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="bg-white/10 p-3 rounded-lg">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
+            <div className="bg-white/10 p-2 sm:p-3 rounded-lg">
               <div className="flex justify-center mb-1">
-                <Utensils className="w-5 h-5" />
+                <Utensils className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="text-xs opacity-80">รายการอาหาร</div>
-              <div className="text-xl font-bold mt-1">{state.foodItems.length}</div>
+              <div className="text-lg sm:text-xl font-bold mt-1">{state.foodItems.length}</div>
             </div>
             
-            <div className="bg-white/10 p-3 rounded-lg">
+            <div className="bg-white/10 p-2 sm:p-3 rounded-lg">
               <div className="flex justify-center mb-1">
-                <Users className="w-5 h-5" />
+                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="text-xs opacity-80">ผู้ร่วมจ่าย</div>
-              <div className="text-xl font-bold mt-1">{state.participants.length}</div>
+              <div className="text-lg sm:text-xl font-bold mt-1">{state.participants.length}</div>
             </div>
             
-            <div className="bg-white/10 p-3 rounded-lg">
+            <div className="bg-white/10 p-2 sm:p-3 rounded-lg">
               <div className="flex justify-center mb-1">
-                <DollarSign className="w-5 h-5" />
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div className="text-xs opacity-80">ยอดรวม</div>
-              <div className="text-xl font-bold mt-1">{Math.round(state.totalAmount)} ฿</div>
+              <div className="text-lg sm:text-xl font-bold mt-1">{Math.round(state.totalAmount)} ฿</div>
             </div>
           </div>
         </div>
@@ -285,7 +299,7 @@ export default function ResultStep({
             แบ่งชำระค่าอาหาร
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {state.splitResults?.map((result) => {
               const details = getParticipantDetails(result.participant.id);
               if (!details) return null;
@@ -299,23 +313,23 @@ export default function ResultStep({
                 >
                   {/* หัว Card - คลิกได้ */}
                   <div 
-                    className="p-4 cursor-pointer border-b bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="p-3 sm:p-4 cursor-pointer border-b bg-gray-50 hover:bg-gray-100 transition-colors"
                     onClick={() => toggleCard(result.participant.id)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">
+                      <div className="flex items-center min-w-0">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-2 sm:mr-3 flex-shrink-0">
                           {result.participant.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-800">{result.participant.name}</h4>
-                          <p className="text-sm text-gray-500">{details.foodItems.length} รายการ</p>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-gray-800 text-sm sm:text-base truncate">{result.participant.name}</h4>
+                          <p className="text-xs sm:text-sm text-gray-500">{details.foodItems.length} รายการ</p>
                         </div>
                       </div>
                       
-                      <div className="flex items-center">
-                        <div className="text-right mr-3">
-                          <div className="text-xl font-bold text-blue-600">
+                      <div className="flex items-center flex-shrink-0">
+                        <div className="text-right mr-2 sm:mr-3">
+                          <div className="text-lg sm:text-xl font-bold text-blue-600">
                             {Math.round(result.amount)} ฿
                           </div>
                           <div className="text-xs text-gray-500">
@@ -324,9 +338,9 @@ export default function ResultStep({
                         </div>
                         
                         {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                          <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                          <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
                         )}
                       </div>
                     </div>
@@ -412,8 +426,8 @@ export default function ResultStep({
             </h4>
             
             <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-              {/* หัวตาราง */}
-              <div className="grid grid-cols-12 gap-2 p-3 border-b bg-gray-100 text-sm font-medium text-gray-600">
+              {/* หัวตาราง - ซ่อนใน mobile */}
+              <div className="hidden sm:grid grid-cols-12 gap-2 p-3 border-b bg-gray-100 text-sm font-medium text-gray-600">
                 <div className="col-span-7">รายการ</div>
                 <div className="col-span-2 text-center">จำนวน</div>
                 <div className="col-span-3 text-right">ราคา (บาท)</div>
@@ -423,11 +437,20 @@ export default function ResultStep({
               <div className="divide-y divide-gray-200 max-h-80 overflow-auto">
                 {state.foodItems.length > 0 ? (
                   state.foodItems.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-blue-50/50 transition-colors">
-                      <div className="col-span-7 font-medium text-gray-800">{item.name}</div>
-                      <div className="col-span-2 text-center text-gray-600">1 จาน</div>
-                      <div className="col-span-3 text-right font-semibold text-gray-800">
+                    <div key={index} className="sm:grid sm:grid-cols-12 sm:gap-2 p-3 items-center hover:bg-blue-50/50 transition-colors">
+                      {/* Desktop layout */}
+                      <div className="hidden sm:block col-span-7 font-medium text-gray-800">{item.name}</div>
+                      <div className="hidden sm:block col-span-2 text-center text-gray-600">1 จาน</div>
+                      <div className="hidden sm:block col-span-3 text-right font-semibold text-gray-800">
                         {Math.round(item.price)}
+                      </div>
+                      
+                      {/* Mobile layout */}
+                      <div className="sm:hidden flex justify-between items-center">
+                        <div className="font-medium text-gray-800 flex-1">{item.name}</div>
+                        <div className="font-semibold text-gray-800 ml-2">
+                          {Math.round(item.price)} ฿
+                        </div>
                       </div>
                     </div>
                   ))
@@ -441,37 +464,73 @@ export default function ResultStep({
               {/* รายละเอียดเพิ่มเติม */}
               <div className="border-t border-gray-200 divide-y divide-gray-200">
                 {state.vat > 0 && (
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
-                    <div className="col-span-9 text-gray-600 text-sm">ภาษีมูลค่าเพิ่ม {state.vat}%</div>
-                    <div className="col-span-3 text-right font-medium text-gray-700">
+                  <div className="sm:grid sm:grid-cols-12 sm:gap-2 p-3 bg-gray-50 items-center">
+                    {/* Desktop layout */}
+                    <div className="hidden sm:block col-span-9 text-gray-600 text-sm">ภาษีมูลค่าเพิ่ม {state.vat}%</div>
+                    <div className="hidden sm:block col-span-3 text-right font-medium text-gray-700">
                       {Math.round(state.foodItems.reduce((sum, item) => sum + item.price, 0) * state.vat / 100)}
+                    </div>
+                    
+                    {/* Mobile layout */}
+                    <div className="sm:hidden flex justify-between items-center">
+                      <div className="text-gray-600 text-sm">ภาษีมูลค่าเพิ่ม {state.vat}%</div>
+                      <div className="font-medium text-gray-700">
+                        {Math.round(state.foodItems.reduce((sum, item) => sum + item.price, 0) * state.vat / 100)} ฿
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {state.serviceCharge > 0 && (
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
-                    <div className="col-span-9 text-gray-600 text-sm">ค่าบริการ {state.serviceCharge}%</div>
-                    <div className="col-span-3 text-right font-medium text-gray-700">
+                  <div className="sm:grid sm:grid-cols-12 sm:gap-2 p-3 bg-gray-50 items-center">
+                    {/* Desktop layout */}
+                    <div className="hidden sm:block col-span-9 text-gray-600 text-sm">ค่าบริการ {state.serviceCharge}%</div>
+                    <div className="hidden sm:block col-span-3 text-right font-medium text-gray-700">
                       {Math.round(state.foodItems.reduce((sum, item) => sum + item.price, 0) * state.serviceCharge / 100)}
+                    </div>
+                    
+                    {/* Mobile layout */}
+                    <div className="sm:hidden flex justify-between items-center">
+                      <div className="text-gray-600 text-sm">ค่าบริการ {state.serviceCharge}%</div>
+                      <div className="font-medium text-gray-700">
+                        {Math.round(state.foodItems.reduce((sum, item) => sum + item.price, 0) * state.serviceCharge / 100)} ฿
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {state.discount > 0 && (
-                  <div className="grid grid-cols-12 gap-2 p-2 bg-gray-50 items-center">
-                    <div className="col-span-9 text-gray-600 text-sm">ส่วนลด</div>
-                    <div className="col-span-3 text-right font-medium text-red-600">
+                  <div className="sm:grid sm:grid-cols-12 sm:gap-2 p-3 bg-gray-50 items-center">
+                    {/* Desktop layout */}
+                    <div className="hidden sm:block col-span-9 text-gray-600 text-sm">ส่วนลด</div>
+                    <div className="hidden sm:block col-span-3 text-right font-medium text-red-600">
                       -{Math.round(state.discount)}
+                    </div>
+                    
+                    {/* Mobile layout */}
+                    <div className="sm:hidden flex justify-between items-center">
+                      <div className="text-gray-600 text-sm">ส่วนลด</div>
+                      <div className="font-medium text-red-600">
+                        -{Math.round(state.discount)} ฿
+                      </div>
                     </div>
                   </div>
                 )}
                 
                 {/* ยอดรวม */}
-                <div className="grid grid-cols-12 gap-2 p-3 bg-blue-50 items-center">
-                  <div className="col-span-9 font-semibold text-blue-800">ยอดรวมทั้งสิ้น</div>
-                  <div className="col-span-3 text-right font-bold text-blue-800 text-lg">
+                <div className="sm:grid sm:grid-cols-12 sm:gap-2 p-3 bg-blue-50 items-center">
+                  {/* Desktop layout */}
+                  <div className="hidden sm:block col-span-9 font-semibold text-blue-800">ยอดรวมทั้งสิ้น</div>
+                  <div className="hidden sm:block col-span-3 text-right font-bold text-blue-800 text-lg">
                     {Math.round(state.totalAmount)}
+                  </div>
+                  
+                  {/* Mobile layout */}
+                  <div className="sm:hidden flex justify-between items-center">
+                    <div className="font-semibold text-blue-800">ยอดรวมทั้งสิ้น</div>
+                    <div className="font-bold text-blue-800 text-lg">
+                      {Math.round(state.totalAmount)} ฿
+                    </div>
                   </div>
                 </div>
               </div>

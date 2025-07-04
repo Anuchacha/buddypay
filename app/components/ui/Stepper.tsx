@@ -62,7 +62,7 @@ export function Stepper({ steps, activeStep, onStepClick, className }: StepperPr
                     {step.title}
                   </p>
                   {step.description && (
-                    <p className="text-xs text-gray-500 mt-1 max-w-[120px]">{step.description}</p>
+                    <p className="text-xs text-gray-500 mt-1 max-w-[120px] hidden sm:block">{step.description}</p>
                   )}
                 </div>
               </div>

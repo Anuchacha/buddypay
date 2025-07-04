@@ -1,0 +1,223 @@
+/* Responsive Design Utilities */
+
+/* Prevent horizontal scrolling on mobile */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden;
+  }
+  
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 767px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  button, .btn {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .btn-sm {
+    min-height: 36px;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Better text readability on mobile */
+@media (max-width: 767px) {
+  .text-responsive {
+    font-size: 0.875rem;
+    line-height: 1.375;
+  }
+  
+  .text-lg-responsive {
+    font-size: 1rem;
+  }
+  
+  .text-xl-responsive {
+    font-size: 1.125rem;
+  }
+  
+  .text-2xl-responsive {
+    font-size: 1.25rem;
+  }
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 767px) {
+  .space-y-mobile > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  .gap-mobile {
+    gap: 0.5rem;
+  }
+  
+  .p-mobile {
+    padding: 0.75rem;
+  }
+  
+  .px-mobile {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .py-mobile {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+/* Better card layouts on mobile */
+@media (max-width: 767px) {
+  .card-mobile {
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .card-compact {
+    padding: 0.75rem;
+  }
+  
+  .card-title-mobile {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+/* Improved form elements on mobile */
+@media (max-width: 767px) {
+  .form-input-mobile {
+    font-size: 1rem; /* Prevent zoom on iOS */
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+  
+  .form-select-mobile {
+    font-size: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Better modal/popup behavior on mobile */
+@media (max-width: 767px) {
+  .modal-mobile {
+    margin: 0.5rem;
+    max-height: calc(100vh - 1rem);
+    overflow-y: auto;
+  }
+  
+  .modal-content-mobile {
+    padding: 1rem;
+  }
+}
+
+/* Improved navigation on mobile */
+@media (max-width: 767px) {
+  .nav-mobile {
+    padding: 0.5rem;
+  }
+  
+  .nav-item-mobile {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* Better table layouts on mobile */
+@media (max-width: 767px) {
+  .table-mobile {
+    font-size: 0.875rem;
+  }
+  
+  .table-mobile td,
+  .table-mobile th {
+    padding: 0.5rem;
+  }
+}
+
+/* Scrollbar styling for mobile */
+@media (max-width: 767px) {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f3f4f6;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
+
+/* Fix for CLS (Cumulative Layout Shift) */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, 
+    #f0f0f0 25%, 
+    transparent 37%, 
+    #f0f0f0 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Improved focus styles for accessibility */
+@media (max-width: 767px) {
+  .focus-mobile:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+}
+
+/* Better handling of long text on mobile */
+@media (max-width: 767px) {
+  .text-truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  
+  .text-wrap-mobile {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+}
+
+/* Improved spacing between sections */
+@media (max-width: 767px) {
+  .section-spacing-mobile {
+    margin-bottom: 1.5rem;
+  }
+  
+  .section-spacing-mobile:last-child {
+    margin-bottom: 0;
+  }
+} 

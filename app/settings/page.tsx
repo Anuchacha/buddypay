@@ -5,13 +5,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Check, AlertCircle, Trash2, AlertTriangle } from 'lucide-react';
+import { Check, AlertCircle, Trash2, AlertTriangle } from 'lucide-react';
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, deleteUser } from 'firebase/auth';
 import { doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageLoader } from '@/app/components/ui/PageLoader';
+import { LoadingButton } from '@/app/components/ui/LoadingButton';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
@@ -141,9 +143,10 @@ export default function SettingsPage() {
   // แสดงหน้าโหลดถ้ากำลังตรวจสอบสถานะการล็อกอิน
   if (authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLoader 
+        message="กำลังโหลดข้อมูลการตั้งค่า..." 
+        overlay={true}
+      />
     );
   }
 
@@ -252,16 +255,13 @@ export default function SettingsPage() {
               </CardContent>
               
               <CardFooter className="flex justify-end">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 size={16} className="mr-2 animate-spin" />
-                      กำลังบันทึก...
-                    </>
-                  ) : (
-                    'เปลี่ยนรหัสผ่าน'
-                  )}
-                </Button>
+                <LoadingButton
+                  type="submit"
+                  loading={isLoading}
+                  loadingText="กำลังบันทึก..."
+                >
+                  เปลี่ยนรหัสผ่าน
+                </LoadingButton>
               </CardFooter>
             </form>
           </Card>
@@ -314,21 +314,16 @@ export default function SettingsPage() {
                     />
                     
                     <div className="flex space-x-3">
-                      <Button
+                      <LoadingButton
                         type="submit"
                         variant="danger"
-                        disabled={isDeleting || !deletePassword}
+                        loading={isDeleting}
+                        disabled={!deletePassword}
+                        loadingText="กำลังลบบัญชี..."
                         className="bg-red-600 hover:bg-red-700"
                       >
-                        {isDeleting ? (
-                          <>
-                            <Loader2 size={16} className="mr-2 animate-spin" />
-                            กำลังลบบัญชี...
-                          </>
-                        ) : (
-                          'ยืนยันการลบบัญชี'
-                        )}
-                      </Button>
+                        ยืนยันการลบบัญชี
+                      </LoadingButton>
                       
                       <Button
                         type="button"

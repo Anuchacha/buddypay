@@ -68,9 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log("Role fetched from Firebase:", role);
           }
           setUserRole(role);
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Fetched User Role:', role);
-          }
           
           sessionStorage.setItem('userRole', role);
           Cookies.set('user-role', role, { secure: true, sameSite: 'strict' });

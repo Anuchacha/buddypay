@@ -10,7 +10,7 @@ import { useAuthModal } from '../../context/AuthModalContext';
 import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/Card';
 import { Button } from '@/app/components/ui/Button';
 import { CalendarIcon, ArrowLeft, CheckCircle2, XCircle, Save } from 'lucide-react';
-import { CategoryIcon } from '@/CategorySelect';
+import { CategoryIcon } from '../../components/CategorySelect';
 
 type BillWithId = Bill & { id: string };
 
@@ -419,7 +419,7 @@ function BillDetailContent() {
           <h1 className="text-3xl font-bold">{bill.name}</h1>
           {bill.categoryId && (
             <div className="flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
-              <CategoryIcon id={bill.categoryId} showName={true} size={20} />
+              <CategoryIcon categoryId={bill.categoryId} size={20} />
             </div>
           )}
         </div>

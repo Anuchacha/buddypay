@@ -7,7 +7,7 @@ import { mockBills } from '../lib/mockData';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/app/components/ui/Card';
 import { Users, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { CategoryIcon } from '@/CategorySelect';
+import { CategoryIcon } from '../components/CategorySelect';
 
 import { db } from '../lib/firebase';
 import { 
@@ -28,6 +28,8 @@ import {
 
 import { Button } from '@/app/components/ui/Button';
 import localforage from 'localforage';
+import { BillHistoryPageSkeleton } from '../components/SkeletonLoaders';
+import { InlineLoader } from '../components/ui/PageLoader';
 
 const BILLS_PER_PAGE = 9; // จำนวนบิลต่อหน้า
 
@@ -198,10 +200,10 @@ export default function BillHistory() {
       }
       
       // ตรวจสอบว่าบิลนี้มีสถานะที่ต้องการอัพเดตอยู่แล้วหรือไม่
-      if (billToUpdate.status === newStatus) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Bill status is already', newStatus);
-        }
+              if (billToUpdate.status === newStatus) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Bill status is already', newStatus);
+          }
         return;
       }
 
@@ -464,13 +466,13 @@ export default function BillHistory() {
 
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">ประวัติบิล</h1>
-        <div className="flex items-center gap-2">
+    <div className="container mx-auto px-4 py-8 sm:py-12">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">ประวัติบิล</h1>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <Button
             variant="outline"
-            className={`text-xs ${loading ? 'bg-blue-200' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
+            className={`text-xs sm:text-sm ${loading ? 'bg-blue-200' : 'bg-blue-500 hover:bg-blue-600'} text-white`}
             onClick={() => {
               setLoading(true);
               fetchBills(true);
@@ -487,12 +489,10 @@ export default function BillHistory() {
       )}
 
       {loading && bills.length === 0 ? (
-        <div className="flex justify-center my-12">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
+        <BillHistoryPageSkeleton />
       ) : bills.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {bills.map((bill) => (
               <Card 
                 key={bill.id} 
@@ -513,12 +513,12 @@ export default function BillHistory() {
                   }
                 }}
               >
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg flex-1 truncate">{bill.name}</CardTitle>
-                    <div className="flex items-center gap-2">
+                <CardHeader className="pb-3 p-4 sm:p-6">
+                  <div className="flex justify-between items-start gap-2">
+                    <CardTitle className="text-base sm:text-lg flex-1 truncate pr-2">{bill.name}</CardTitle>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {bill.categoryId && (
-                        <CategoryIcon id={bill.categoryId} showName={true} size={20} />
+                        <CategoryIcon categoryId={bill.categoryId} size={20} />
                       )}
                       {isAuthenticated && bill.userId === user?.uid && (
                         <button
@@ -543,40 +543,40 @@ export default function BillHistory() {
                       )}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">
+                  <div className="text-xs sm:text-sm text-gray-500 mt-1">
                     {formatDate(bill.createdAt)}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6 pt-0">
                   <div className="flex items-center justify-between text-sm text-gray-600">
                     <div className="flex items-center">
-                      <Users size={16} className="mr-1" />
-                      <span>{bill.participants?.length || 0} คน</span>
+                      <Users size={14} className="mr-1 sm:mr-2" />
+                      <span className="text-xs sm:text-sm">{bill.participants?.length || 0} คน</span>
                     </div>
-                    <div className="font-medium text-base">
+                    <div className="font-medium text-sm sm:text-base">
                       {bill.totalAmount?.toLocaleString() || 0} บาท
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="border-t pt-3">
+                <CardFooter className="border-t pt-3 p-4 sm:p-6">
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-sm">สถานะ:</span>
+                    <span className="text-xs sm:text-sm">สถานะ:</span>
                     {calculateBillStatus(bill) === 'paid' ? (
-                      <span className="text-sm flex items-center text-green-600">
-                        <CheckCircle2 size={16} className="mr-1" />
+                      <span className="text-xs sm:text-sm flex items-center text-green-600">
+                        <CheckCircle2 size={14} className="mr-1" />
                         ชำระแล้ว
                       </span>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="text-sm flex items-center text-amber-600">
-                          <XCircle size={16} className="mr-1" />
+                        <span className="text-xs sm:text-sm flex items-center text-amber-600">
+                          <XCircle size={14} className="mr-1" />
                           รอชำระ
                         </span>
                         {isAuthenticated && bill.userId === user?.uid && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-6 px-2"
+                            className="text-xs h-6 px-2 sm:h-8 sm:px-3"
                             onClick={(e) => {
                               e.stopPropagation();
                               updateAllParticipants(bill.id, 'paid');
@@ -602,8 +602,11 @@ export default function BillHistory() {
                 onClick={loadMore}
                 disabled={loading}
               >
-                {loading ? 'กำลังโหลด...' : 'โหลดเพิ่มเติม'}
-                {loading && <div className="ml-2 h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>}
+                {loading ? (
+                  <InlineLoader size="sm" message="กำลังโหลด..." />
+                ) : (
+                  'โหลดเพิ่มเติม'
+                )}
               </Button>
             </div>
           )}

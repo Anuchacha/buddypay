@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/Card';
-import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import { useAuth } from '../context/AuthContext';
-import { Loader2, Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/app/lib/firebase';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { PageLoader } from '@/app/components/ui/PageLoader';
+import { LoadingButton } from '@/app/components/ui/LoadingButton';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -70,9 +71,10 @@ export default function ProfilePage() {
   // แสดงหน้าโหลดถ้ากำลังตรวจสอบสถานะการล็อกอิน
   if (authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <PageLoader 
+        message="กำลังโหลดข้อมูลผู้ใช้..." 
+        overlay={true}
+      />
     );
   }
 
@@ -164,16 +166,13 @@ export default function ProfilePage() {
               </CardContent>
               
               <CardFooter className="flex justify-end">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 size={16} className="mr-2 animate-spin" />
-                      กำลังบันทึก...
-                    </>
-                  ) : (
-                    'บันทึกข้อมูล'
-                  )}
-                </Button>
+                <LoadingButton
+                  type="submit"
+                  loading={isLoading}
+                  loadingText="กำลังบันทึก..."
+                >
+                  บันทึกข้อมูล
+                </LoadingButton>
               </CardFooter>
             </form>
           </Card>

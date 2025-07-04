@@ -199,3 +199,6 @@
   background: white;
   border-radius: calc(1rem - 2px);
 }
+
+/* Import responsive utilities */
+@import './styles/responsive.css';

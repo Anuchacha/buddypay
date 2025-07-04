@@ -171,20 +171,20 @@ export default function ShareBillPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
+    <div className="bg-gray-50 min-h-screen py-6 sm:py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto">
-          <header className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <header className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               แชร์ค่าอาหาร
             </h1>
-            <p className="text-lg text-muted-foreground mb-6">
+            <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-6">
               แชร์ค่าอาหารกับเพื่อนๆ ได้อย่างง่ายดาย รวดเร็ว และยุติธรรม
             </p>
           </header>
 
           {/* เพิ่ม Stepper */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Stepper 
               steps={getStepsForDisplay()} 
               activeStep={getDisplayStep()} 
@@ -195,7 +195,7 @@ export default function ShareBillPage() {
                   goToStep(actualStep);
                 }
               }}
-              className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+              className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200"
             />
           </div>
 
@@ -295,12 +295,12 @@ export default function ShareBillPage() {
               )}
 
               {/* Step navigation buttons */}
-              <CardFooter className="bg-gray-50 border-t px-6 py-4 flex justify-between">
+              <CardFooter className="bg-gray-50 border-t px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
                 {getDisplayStep() > 0 ? (
                   <Button 
                     onClick={goToPreviousStep} 
                     variant="outline"
-                    className="flex items-center gap-2"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto order-2 sm:order-1"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -308,13 +308,13 @@ export default function ShareBillPage() {
                     ย้อนกลับ
                   </Button>
                 ) : (
-                  <div></div> // ให้ปุ่ม "ถัดไป" อยู่ด้านขวาเสมอ
+                  <div className="hidden sm:block"></div> // ให้ปุ่ม "ถัดไป" อยู่ด้านขวาเสมอ
                 )}
                 
                 {getDisplayStep() < getStepsForDisplay().length - 1 ? (
                   <Button 
                     onClick={goToNextStep} 
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-2"
+                    className="bg-primary hover:bg-primary/90 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-2"
                     disabled={!canProceedToNextStep()}
                   >
                     ถัดไป
@@ -325,10 +325,10 @@ export default function ShareBillPage() {
                 ) : (
                   <Button 
                     onClick={handleSaveBill} 
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-2"
+                    className="bg-primary hover:bg-primary/90 flex items-center justify-center gap-2 w-full sm:w-auto order-1 sm:order-2"
                     disabled={!canProceedToNextStep()}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     บันทึกบิล
