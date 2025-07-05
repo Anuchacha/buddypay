@@ -158,22 +158,22 @@ export default function BillDetailsStep({
                   {/* ตัวเลือกหมวดหมู่ */}
                   <div className="p-2 border-b border-gray-100">
                     <div className="flex items-center overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pb-1">
-                      <button
-                        onClick={() => setSelectedCategory(null)}
+                    <button
+                      onClick={() => setSelectedCategory(null)}
                         className={`flex items-center px-3 py-1.5 mr-2 rounded-full text-xs whitespace-nowrap flex-shrink-0 ${!selectedCategory ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-                      >
-                        ทั้งหมด
-                      </button>
-                      {categories.map((category, index) => (
-                        <button
-                          key={`cat-${index}`}
-                          onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
+                    >
+                      ทั้งหมด
+                    </button>
+                    {categories.map((category, index) => (
+                      <button
+                        key={`cat-${index}`}
+                        onClick={() => setSelectedCategory(selectedCategory === category ? null : category)}
                           className={`flex items-center px-3 py-1.5 mr-2 rounded-full text-xs whitespace-nowrap flex-shrink-0 ${selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}
-                        >
-                          <Tag size={10} className="mr-1" />
-                          {category}
-                        </button>
-                      ))}
+                      >
+                        <Tag size={10} className="mr-1" />
+                        {category}
+                      </button>
+                    ))}
                     </div>
                   </div>
                   

@@ -43,11 +43,11 @@ export default function ResultStep({
 
   // Debug logging (development only)
   if (process.env.NODE_ENV === 'development') {
-    console.log('ResultStep - state:', state);
-    console.log('ResultStep - splitResults:', state.splitResults);
-    console.log('ResultStep - splitMethod:', state.splitMethod);
-    console.log('ResultStep - participants:', state.participants);
-    console.log('ResultStep - foodItems:', state.foodItems);
+  console.log('ResultStep - state:', state);
+  console.log('ResultStep - splitResults:', state.splitResults);
+  console.log('ResultStep - splitMethod:', state.splitMethod);
+  console.log('ResultStep - participants:', state.participants);
+  console.log('ResultStep - foodItems:', state.foodItems);
   }
 
   const toggleCard = (participantId: string) => {
@@ -63,7 +63,7 @@ export default function ResultStep({
     if (isSharedView && existingShareUrl) {
       setShareUrl(existingShareUrl);
       if (process.env.NODE_ENV === 'development') {
-        console.log('Using existing share URL:', existingShareUrl);
+      console.log('Using existing share URL:', existingShareUrl);
       }
       return;
     }
@@ -71,7 +71,7 @@ export default function ResultStep({
     setIsSharing(true);
     try {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Creating share link...');
+      console.log('Creating share link...');
       }
       
       // ตรวจสอบข้อมูลที่จำเป็น
@@ -87,7 +87,7 @@ export default function ResultStep({
         notes
       };
       if (process.env.NODE_ENV === 'development') {
-        console.log('Data to send:', dataToSend);
+      console.log('Data to send:', dataToSend);
       }
       
       const response = await fetch('/api/share/create', {
@@ -104,13 +104,13 @@ export default function ResultStep({
       
       const result = await response.json();
       if (process.env.NODE_ENV === 'development') {
-        console.log('API Response:', result);
+      console.log('API Response:', result);
       }
       
       if (result.success && result.shareUrl) {
         setShareUrl(result.shareUrl);
         if (process.env.NODE_ENV === 'development') {
-          console.log('Share link created successfully:', result.shareUrl);
+        console.log('Share link created successfully:', result.shareUrl);
         }
         
         // แสดง prompt สำหรับการเก็บบิลถาวร (ถ้าไม่ได้ล็อกอิน)
@@ -169,7 +169,7 @@ export default function ResultStep({
     const splitResult = state.splitResults?.find(result => result.participant.id === participantId);
     if (!splitResult) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('No split result found for participant:', participantId);
+      console.log('No split result found for participant:', participantId);
       }
       return null;
     }

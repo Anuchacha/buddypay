@@ -33,28 +33,28 @@ export default function AdminDashboardPage() {
     const isSessionAdmin = sessionRole === 'admin';
     
     if (!loading) {
-            setIsLoading(false);
+      setIsLoading(false);
       if (process.env.NODE_ENV === 'development') {
         console.log('User:', user?.email);
         console.log('User Role from Auth Context:', userRole);
         console.log('User Role from Session Storage:', sessionRole);
       }
       
-              if (!user) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Access denied: user is not logged in');
-          }
+      if (!user) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Access denied: user is not logged in');
+        }
         router.push('/login');
-              } else if (userRole !== 'admin' && !isSessionAdmin) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Access denied: user=', user?.email, 'role=', userRole);
-          }
+      } else if (userRole !== 'admin' && !isSessionAdmin) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Access denied: user=', user?.email, 'role=', userRole);
+        }
         alert('คุณไม่มีสิทธิ์เข้าถึงหน้านี้');
         router.push('/');
-              } else {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
-          }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Admin access granted to:', user?.email, 'with role:', userRole || sessionRole);
+        }
       }
     }
   }, [user, userRole, loading, router]);

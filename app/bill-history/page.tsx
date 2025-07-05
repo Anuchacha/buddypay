@@ -200,10 +200,10 @@ export default function BillHistory() {
       }
       
       // ตรวจสอบว่าบิลนี้มีสถานะที่ต้องการอัพเดตอยู่แล้วหรือไม่
-              if (billToUpdate.status === newStatus) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Bill status is already', newStatus);
-          }
+      if (billToUpdate.status === newStatus) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Bill status is already', newStatus);
+        }
         return;
       }
 

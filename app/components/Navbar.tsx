@@ -17,7 +17,7 @@ import {
 import { useAuthModal } from '../context/AuthModalContext';
 import { useAuth } from '../context/AuthContext';
 import { Menu, Bell, Clock, CheckCircle2 } from 'lucide-react';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 // สร้าง Nullable version ของ useFirebase
 function useSafeFirebase() {
@@ -50,7 +50,7 @@ interface PendingBill {
   amountOwed?: number;
 }
 
-// Custom Hook สำหรับดึงข้อมูลบิลที่ค้างชำระ
+// Custom Hook สำหรับดึงข้อมูลบิลที่ค้างชำระแบบ real-time
 function usePendingBills() {
   const [pendingBills, setPendingBills] = useState<PendingBill[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -61,46 +61,25 @@ function usePendingBills() {
   useEffect(() => {
     if (!isAuthenticated || !user || !firebase.db) return;
 
-    const fetchPendingBills = async () => {
-      setLoading(true);
+    setLoading(true);
+
+    // ใช้ onSnapshot สำหรับ real-time updates
+    const billsQuery = query(
+      collection(firebase.db, 'bills'),
+      orderBy('createdAt', 'desc'),
+      limit(100) // เพิ่ม limit เพื่อประสิทธิภาพ
+    );
+
+    const unsubscribe = onSnapshot(billsQuery, (snapshot) => {
       try {
-        // ดึงบิลที่ผู้ใช้เป็นเจ้าของและยังไม่ชำระ
-        const ownerQuery = query(
-          collection(firebase.db, 'bills'),
-          where('userId', '==', user.uid),
-          where('status', '==', 'pending'),
-          orderBy('createdAt', 'desc'),
-          limit(10)
-        );
-        const ownerSnapshot = await getDocs(ownerQuery);
-        
-        // ดึงบิลที่ผู้ใช้เป็นผู้เข้าร่วมและยังไม่ชำระ
-        const participantQuery = query(
-          collection(firebase.db, 'bills'),
-          orderBy('createdAt', 'desc'),
-          limit(50) // ดึงมากกว่าเพื่อกรองแล้ว
-        );
-        const participantSnapshot = await getDocs(participantQuery);
-        
         const bills: PendingBill[] = [];
         let count = 0;
 
-        // จัดการบิลที่เป็นเจ้าของ
-        ownerSnapshot.docs.forEach(doc => {
+        snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
           const data = doc.data();
-          bills.push({
-            id: doc.id,
-            title: data.title || 'ไม่มีชื่อบิล',
-            totalAmount: data.totalAmount || 0,
-            createdAt: data.createdAt?.toDate() || new Date(),
-          });
-          count++;
-        });
-
-        // จัดการบิลที่เป็นผู้เข้าร่วม
-        participantSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          if (data.userId === user.uid) return; // ข้ามบิลที่เป็นเจ้าของ
+          
+          // ข้ามบิลที่ผู้ใช้เป็นเจ้าของ
+          if (data.userId === user.uid) return;
           
           // ตรวจสอบว่าผู้ใช้เป็นผู้เข้าร่วมและยังไม่ชำระ
           const userParticipant = data.participants?.find((p: any) => 
@@ -110,7 +89,7 @@ function usePendingBills() {
           if (userParticipant) {
             bills.push({
               id: doc.id,
-              title: data.title || 'ไม่มีชื่อบิล',
+              title: data.title || data.name || 'ไม่มีชื่อบิล',
               totalAmount: data.totalAmount || 0,
               createdAt: data.createdAt?.toDate() || new Date(),
               participantName: userParticipant.name,
@@ -120,20 +99,23 @@ function usePendingBills() {
           }
         });
 
-        setPendingBills(bills.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+        // เรียงลำดับตามวันที่สร้าง (ใหม่ไปเก่า)
+        const sortedBills = bills.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        
+        setPendingBills(sortedBills);
         setPendingCount(count);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching pending bills:', error);
-      } finally {
+        console.error('Error processing pending bills:', error);
         setLoading(false);
       }
-    };
+    }, (error: Error) => {
+      console.error('Error in pending bills snapshot:', error);
+      setLoading(false);
+    });
 
-    fetchPendingBills();
-    
-    // ตั้งค่า interval เพื่อดึงข้อมูลใหม่ทุก 30 วินาที
-    const interval = setInterval(fetchPendingBills, 30000);
-    return () => clearInterval(interval);
+    // Cleanup function
+    return () => unsubscribe();
   }, [isAuthenticated, user, firebase.db]);
 
   return { pendingBills, pendingCount, loading };
