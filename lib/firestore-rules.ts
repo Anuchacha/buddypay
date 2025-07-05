@@ -34,7 +34,6 @@ service cloud.firestore {
     match /bills/{billId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || 
-        resource.data.sharedWith[request.auth.uid] == true ||
         isAdmin()
       );
       allow create: if isAuthenticated();

@@ -65,8 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           const role = await getUserRole(user.uid);
           if (process.env.NODE_ENV === 'development') {
-            console.log("Role fetched from Firebase:", role);
-          }
+            }
           setUserRole(role);
           
           sessionStorage.setItem('userRole', role);

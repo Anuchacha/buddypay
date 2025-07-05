@@ -132,7 +132,7 @@ export default function ShareBillPage() {
     if (sanitizedId.length === 10 || sanitizedId.length === 13) {
       try {
         // สร้าง QR Code สำหรับ PromptPay
-        const amount = state.totalAmount > 0 ? state.totalAmount : undefined;
+        const amount = 0; // ใส่จำนวนเงินเป็น 0 เสมอ
         const payload = generatePayload(sanitizedId, { amount });
         setQrPayload(payload);
       } catch (error) {
@@ -142,7 +142,7 @@ export default function ShareBillPage() {
       // ล้าง QR code ถ้าข้อมูลไม่ถูกต้อง
       setQrPayload('');
     }
-  }, [promptPayId, state.totalAmount, setQrPayload]);
+  }, [promptPayId, setQrPayload]);
 
   // แสดงข้อความโหลดข้อมูล
   if (isLoading && state.bills.length === 0) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useFirebase } from '../components/providers/FirebaseWrapper';
@@ -17,27 +17,26 @@ import {
 import { useAuthModal } from '../context/AuthModalContext';
 import { useAuth } from '../context/AuthContext';
 import { Menu, Bell, Clock, CheckCircle2 } from 'lucide-react';
-import { collection, query, orderBy, limit, onSnapshot, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, QueryDocumentSnapshot, DocumentData, where } from 'firebase/firestore';
 
-// สร้าง Nullable version ของ useFirebase
+// สร้าง Nullable version ของ useFirebase - ปรับปรุงเพื่อลด re-render
 function useSafeFirebase() {
-  // ตรวจสอบว่าอยู่ใน client หรือไม่
   const [isMounted, setIsMounted] = useState(false);
-  
-  // เรียกใช้ hook ตรงนี้ นอกเงื่อนไข - ต้องเรียกทุกครั้งที่ render
   const firebase = useFirebase();
   
   useEffect(() => {
     setIsMounted(true);
   }, []);
   
-  // ถ้าไม่ได้อยู่ใน client หรือยังโหลดไม่เสร็จ ให้คืนค่า null
-  if (!isMounted) {
-    return { app: null, db: null, auth: null };
-  }
+  // ใช้ useMemo เพื่อ cache ค่า firebase
+  const safeFirebase = useMemo(() => {
+    if (!isMounted) {
+      return { app: null, db: null, auth: null };
+    }
+    return firebase;
+  }, [isMounted, firebase]);
   
-  // คืนค่า firebase ที่เรียกไว้แล้วข้างบน
-  return firebase;
+  return safeFirebase;
 }
 
 // Interface สำหรับบิลที่ค้างชำระ
@@ -50,7 +49,7 @@ interface PendingBill {
   amountOwed?: number;
 }
 
-// Custom Hook สำหรับดึงข้อมูลบิลที่ค้างชำระแบบ real-time
+// Custom Hook สำหรับดึงข้อมูลบิลที่ค้างชำระแบบ real-time - ปรับปรุงเพื่อลด re-render
 function usePendingBills() {
   const [pendingBills, setPendingBills] = useState<PendingBill[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -58,65 +57,83 @@ function usePendingBills() {
   const { user, isAuthenticated } = useAuth();
   const firebase = useSafeFirebase();
 
+  // ใช้ useCallback เพื่อ cache ฟังก์ชัน
+  const processBills = useCallback((snapshot: any) => {
+    try {
+      const bills: PendingBill[] = [];
+      let count = 0;
+
+      snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = doc.data();
+        
+        // แสดงเฉพาะบิลที่ผู้ใช้เป็นเจ้าของ
+        if (data.userId !== user?.uid) {
+          return;
+        }
+        
+        // ตรวจสอบว่ามีคนค้างชำระหรือไม่
+        const pendingParticipants = data.participants?.filter((p: any) => 
+          p.status === 'pending'
+        );
+        
+        if (pendingParticipants && pendingParticipants.length > 0) {
+          // คำนวณยอดค้างชำระรวม
+          const totalPendingAmount = pendingParticipants.reduce((sum: number, p: any) => 
+            sum + (p.amount || 0), 0
+          );
+          
+          // สร้างรายชื่อคนที่ค้างชำระ
+          const pendingNames = pendingParticipants.map((p: any) => p.name).join(', ');
+          
+          bills.push({
+            id: doc.id,
+            title: data.title || data.name || 'ไม่มีชื่อบิล',
+            totalAmount: data.totalAmount || 0,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            participantName: pendingNames,
+            amountOwed: totalPendingAmount
+          });
+          count++;
+        }
+      });
+
+      // เรียงลำดับตามวันที่สร้าง (ใหม่ไปเก่า)
+      const sortedBills = bills.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      setPendingBills(sortedBills);
+      setPendingCount(count);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error processing pending bills:', error);
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
   useEffect(() => {
-    if (!isAuthenticated || !user || !firebase.db) return;
+    if (!isAuthenticated || !user || !firebase.db) {
+      return;
+    }
 
     setLoading(true);
 
     // ใช้ onSnapshot สำหรับ real-time updates
     const billsQuery = query(
       collection(firebase.db, 'bills'),
+      where('userId', '==', user.uid),
       orderBy('createdAt', 'desc'),
-      limit(100) // เพิ่ม limit เพื่อประสิทธิภาพ
+      limit(100)
     );
 
-    const unsubscribe = onSnapshot(billsQuery, (snapshot) => {
-      try {
-        const bills: PendingBill[] = [];
-        let count = 0;
-
-        snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
-          const data = doc.data();
-          
-          // ข้ามบิลที่ผู้ใช้เป็นเจ้าของ
-          if (data.userId === user.uid) return;
-          
-          // ตรวจสอบว่าผู้ใช้เป็นผู้เข้าร่วมและยังไม่ชำระ
-          const userParticipant = data.participants?.find((p: any) => 
-            p.email === user.email && p.status === 'pending'
-          );
-          
-          if (userParticipant) {
-            bills.push({
-              id: doc.id,
-              title: data.title || data.name || 'ไม่มีชื่อบิล',
-              totalAmount: data.totalAmount || 0,
-              createdAt: data.createdAt?.toDate() || new Date(),
-              participantName: userParticipant.name,
-              amountOwed: userParticipant.amount || 0
-            });
-            count++;
-          }
-        });
-
-        // เรียงลำดับตามวันที่สร้าง (ใหม่ไปเก่า)
-        const sortedBills = bills.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        
-        setPendingBills(sortedBills);
-        setPendingCount(count);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error processing pending bills:', error);
-        setLoading(false);
-      }
-    }, (error: Error) => {
+    const unsubscribe = onSnapshot(billsQuery, processBills, (error: Error) => {
       console.error('Error in pending bills snapshot:', error);
       setLoading(false);
     });
 
     // Cleanup function
-    return () => unsubscribe();
-  }, [isAuthenticated, user, firebase.db]);
+    return () => {
+      unsubscribe();
+    };
+  }, [isAuthenticated, user, firebase.db, processBills]);
 
   return { pendingBills, pendingCount, loading };
 }
@@ -128,6 +145,7 @@ export default function Navbar() {
   const firebase = useSafeFirebase();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  
   const { pendingBills, pendingCount, loading } = usePendingBills();
   
   // ถ้า Firebase ยังไม่พร้อม ให้แสดง skeleton หรือข้อความรอโหลด
@@ -268,7 +286,7 @@ export default function Navbar() {
                               </div>
                               <div className="text-xs text-muted-foreground">
                                 {bill.participantName ? (
-                                  <>คุณค้างชำระ ฿{bill.amountOwed?.toLocaleString()}</>
+                                  <>ค้างชำระ: {bill.participantName} ฿{bill.amountOwed?.toLocaleString()}</>
                                 ) : (
                                   <>ยอดรวม ฿{bill.totalAmount.toLocaleString()}</>
                                 )}

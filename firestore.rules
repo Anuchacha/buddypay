@@ -1,0 +1,156 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ฟังก์ชันสำหรับตรวจสอบการล็อกอิน
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // ฟังก์ชันสำหรับตรวจสอบว่าเป็นเจ้าของข้อมูล
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ฟังก์ชันสำหรับตรวจสอบสิทธิ์ admin
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ปิดการเข้าถึงทั้งหมดเป็นค่าเริ่มต้น
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Bills collection
+    match /bills/{billId} {
+      // อนุญาตให้อ่านบิลเฉพาะเจ้าของหรือ admin
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+      
+      // อนุญาตให้สร้างบิลใหม่เฉพาะผู้ใช้ที่ล็อกอิน และต้องระบุ userId เป็นของตัวเอง
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // อนุญาตให้แก้ไขบิลเฉพาะเจ้าของหรือ admin
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      
+      // อนุญาตให้ลบบิลเฉพาะเจ้าของหรือ admin
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // ผู้ใช้สามารถอ่านและแก้ไขข้อมูลของตัวเองเท่านั้น หรือ admin
+      allow read, write: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Categories collection (public read, admin write)
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Settings collection (public read, admin write)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // อนุญาตให้อ่านการแจ้งเตือนเฉพาะเจ้าของหรือ admin
+      allow read: if isAuthenticated() && (
+        resource.data.billCreatorId == request.auth.uid ||
+        isAdmin()
+      );
+      
+      // อนุญาตให้สร้างการแจ้งเตือน
+      allow create: if isAuthenticated();
+      
+      // อนุญาตให้แก้ไขการแจ้งเตือนเฉพาะเจ้าของหรือ admin
+      allow update: if isAuthenticated() && (
+        resource.data.billCreatorId == request.auth.uid ||
+        isAdmin()
+      );
+      
+      // ไม่อนุญาตให้ลบ (ให้ระบบจัดการเอง)
+      allow delete: if false;
+    }
+    
+    // Bill Activities collection
+    match /billActivities/{activityId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+    
+    // Weekly summaries collection
+    match /weeklySummaries/{summaryId} {
+      allow read: if isAuthenticated() && (
+        resource.data.billCreatorId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+    
+    // Temporary shared bills collection (สำหรับลิงค์แชร์ชั่วคราว)
+    match /temporary_shared_bills/{shareId} {
+      // อนุญาตให้ทุกคนอ่านได้ (เพื่อแชร์บิล)
+      allow read: if true;
+      
+      // อนุญาตให้สร้างได้โดยไม่ต้องล็อกอิน (สำหรับสร้างลิงค์แชร์ชั่วคราว)
+      allow create: if true;
+      
+      // ไม่อนุญาตให้แก้ไขหรือลบ (จะถูกลบอัตโนมัติเมื่อหมดอายุ)
+      allow update, delete: if false;
+    }
+    
+    // Shared bills collection
+    match /shared_bills/{shareId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Participant groups collection
+    match /participantGroups/{groupId} {
+      allow read: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+    }
+    
+    // Activity logs collection
+    match /activityLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    // Shares collection (จากกฎใหม่)
+    match /shares/{shareId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        resource.data.sharedWith == request.auth.uid ||
+        isAdmin()
+      );
+      allow write: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+  }
+} 

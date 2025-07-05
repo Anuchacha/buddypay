@@ -25,17 +25,23 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase if not already initialized
+// Initialize Firebase if not already initialized - ย้ายออกมานอก component
 let app: FirebaseApp;
+let auth: ReturnType<typeof getAuth>;
+let db: ReturnType<typeof getFirestore>;
+let googleProvider: GoogleAuthProvider;
+
+// สร้าง Firebase instances เฉพาะครั้งเดียว
 if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
 } else {
   app = getApps()[0];
 }
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
+// สร้าง auth, db, และ provider เฉพาะครั้งเดียว
+auth = getAuth(app);
+db = getFirestore(app);
+googleProvider = new GoogleAuthProvider();
 
 // สร้าง context สำหรับใช้งาน Firebase
 interface FirebaseContextType {
@@ -67,28 +73,19 @@ function LoadingComponent() {
 export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firebaseInstance, setFirebaseInstance] = useState<any>(null);
 
   useEffect(() => {
     try {
-      // สร้าง Firebase instances เฉพาะใน client-side
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      const auth = getAuth(app);
-      
-      // ตรวจสอบการเปลี่ยนแปลงสถานะการตรวจสอบสิทธิ์
+      // ใช้ Firebase instances ที่สร้างไว้แล้วข้างนอก
       const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
         setLoading(false);
       });
       
-      setFirebaseInstance({ app, db, auth });
-      
       return () => unsubscribe();
     } catch (error) {
       console.error("Firebase initialization error:", error);
       setLoading(false);
-      return; // เพิ่ม return เพื่อให้ทุก code path มี return value
     }
   }, []);
 
@@ -96,10 +93,9 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     if (!auth) throw new Error('ระบบ Firebase ยังไม่พร้อมใช้งาน กรุณาลองใหม่อีกครั้ง');
     try {
-      return await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error: any) {
-      // ปรับปรุง error messages ให้เป็นมิตรกับผู้ใช้
-      throw error; // ปล่อยให้ AuthContext จัดการ error message
+      throw error;
     }
   };
 
@@ -121,10 +117,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
           createdAt: new Date(),
         });
       }
-      
-      return userCredential;
     } catch (error: any) {
-      // ปล่อยให้ AuthContext จัดการ error message
       throw error;
     }
   };
@@ -173,10 +166,7 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-      
-      return result;
     } catch (error: any) {
-      // ปล่อยให้ AuthContext จัดการ error message
       throw error;
     }
   };
@@ -186,7 +176,6 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
     try {
       return await firebaseSignOut(auth);
     } catch (error: any) {
-      // ปล่อยให้ AuthContext จัดการ error message
       throw error;
     }
   };
@@ -230,13 +219,10 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   // ถ้ากำลังเริ่มต้น ให้แสดง loading
   if (loading) return <LoadingComponent />;
 
-  // ถ้าไม่สามารถสร้าง Firebase instance ได้
-  if (!firebaseInstance) {
-    return <div className="text-center p-4">ไม่สามารถเชื่อมต่อกับ Firebase ได้ กรุณาลองใหม่อีกครั้ง</div>;
-  }
-
   const value = {
-    ...firebaseInstance,
+    app,
+    db,
+    auth,
     user,
     loading,
     signIn,

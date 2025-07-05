@@ -1,15 +1,9 @@
 'use client';
 
+import { Suspense, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
 
-// ทำการ import Navbar แบบ dynamic ซึ่งจะโหลดแบบ lazy
-const DynamicNavbar = dynamic(() => import('./Navbar'), {
-  ssr: false, // ไม่ render ที่ server
-  loading: () => <NavbarSkeleton />, // แสดง loading component ระหว่างรอ
-});
-
-// ตัว skeleton component สำหรับแสดงระหว่างรอโหลด Navbar
+// Skeleton component สำหรับแสดงระหว่างที่ Navbar กำลังโหลด
 function NavbarSkeleton() {
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-background border-b border-border z-50 animate-pulse">
@@ -21,10 +15,20 @@ function NavbarSkeleton() {
   );
 }
 
+// Dynamic import สำหรับ Navbar component
+const Navbar = dynamic(() => import('./Navbar'), {
+  loading: () => <NavbarSkeleton />,
+  ssr: false
+});
+
 export default function NavbarWrapper() {
+  useEffect(() => {
+    // ทำงานเมื่อ component mount
+  }, []);
+
   return (
     <Suspense fallback={<NavbarSkeleton />}>
-      <DynamicNavbar />
+      <Navbar />
     </Suspense>
   );
 } 
