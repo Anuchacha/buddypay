@@ -15,14 +15,31 @@ export default function FoodParticipantsStep({
   
   // ตรวจสอบว่ารายการอาหารไหนยังไม่มีผู้กิน
   const getItemStatus = (item: any) => {
-    if (item.participants.length === 0) {
+    if (!item.participants || item.participants.length === 0) {
       return { status: 'incomplete', message: 'ยังไม่มีผู้กิน' };
     }
     return { status: 'complete', message: `${item.participants.length} คน` };
   };
 
-  const incompleteItems = state.foodItems.filter(item => item.participants.length === 0);
+  const incompleteItems = state.foodItems.filter(item => (item.participants || []).length === 0);
   const allItemsAssigned = incompleteItems.length === 0 && state.foodItems.length > 0;
+
+  // helpers
+  const allParticipantIds = state.participants.map(p => p.id);
+
+  const handleSelectAllForItem = (item: any) => {
+    dispatch({
+      type: 'UPDATE_FOOD_ITEM',
+      payload: { ...item, participants: allParticipantIds }
+    });
+  };
+
+  const handleClearForItem = (item: any) => {
+    dispatch({
+      type: 'UPDATE_FOOD_ITEM',
+      payload: { ...item, participants: [] }
+    });
+  };
 
   return (
     <>
@@ -124,6 +141,26 @@ export default function FoodParticipantsStep({
                             {(item.price / item.participants.length).toLocaleString()} บาท/คน
                           </Badge>
                         )}
+
+                        {/* ปุ่ม เลือกทุกคน / ล้าง ต่อ "รายการอาหาร" */}
+                        <div className="hidden sm:flex items-center space-x-1 ml-2">
+                          <button
+                            type="button"
+                            onClick={() => handleSelectAllForItem(item)}
+                            className="px-2 py-1 text-xs rounded border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                            title="เลือกทุกคนสำหรับรายการนี้"
+                          >
+                            เลือกทุกคน
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleClearForItem(item)}
+                            className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+                            title="ล้างผู้กินทั้งหมดของรายการนี้"
+                          >
+                            ล้าง
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
@@ -132,9 +169,30 @@ export default function FoodParticipantsStep({
                       <p className="text-sm font-medium text-gray-700 mb-3">
                         เลือกผู้ที่รับประทานรายการนี้:
                       </p>
+
+                      {/* ปุ่มสำหรับจอเล็ก (ซ้ำกับด้านบน แต่โชว์บน mobile) */}
+                      <div className="flex sm:hidden items-center space-x-2 mb-3">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectAllForItem(item)}
+                          className="px-3 py-1.5 text-xs rounded border border-primary/40 text-primary hover:bg-primary/10 transition-colors"
+                          title="เลือกทุกคนสำหรับรายการนี้"
+                        >
+                          เลือกทุกคน
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleClearForItem(item)}
+                          className="px-3 py-1.5 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+                          title="ล้างผู้กินทั้งหมดของรายการนี้"
+                        >
+                          ล้าง
+                        </button>
+                      </div>
+
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                         {state.participants.map(participant => {
-                          const isSelected = item.participants.includes(participant.id);
+                          const isSelected = (item.participants || []).includes(participant.id);
                           
                           return (
                             <label 
@@ -150,8 +208,8 @@ export default function FoodParticipantsStep({
                                 checked={isSelected}
                                 onChange={(e) => {
                                   const updatedParticipants = e.target.checked
-                                    ? [...item.participants, participant.id]
-                                    : item.participants.filter(id => id !== participant.id);
+                                    ? [...(item.participants || []), participant.id]
+                                    : (item.participants || []).filter((id: string) => id !== participant.id);
                                   
                                   dispatch({
                                     type: 'UPDATE_FOOD_ITEM',
@@ -193,4 +251,4 @@ export default function FoodParticipantsStep({
       </CardContent>
     </>
   );
-} 
+}

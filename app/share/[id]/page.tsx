@@ -8,6 +8,9 @@ import { getAppUrl } from '@/app/lib/utils';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { useAuthModal } from '@/app/context/AuthModalContext';
+import { useAuth } from '@/app/context/AuthContext';
+import { useRef } from 'react';
 
 interface SharedBillData extends BillState {
   expiryDate: string;
@@ -25,6 +28,9 @@ export default function SharedBillPage() {
   const [billData, setBillData] = useState<SharedBillData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { openSignupModal } = useAuthModal();
+  const { isAuthenticated } = useAuth();
+  const shouldSaveBill = useRef(false);
 
   useEffect(() => {
     const fetchSharedBill = async () => {
@@ -49,6 +55,14 @@ export default function SharedBillPage() {
       fetchSharedBill();
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (isAuthenticated && shouldSaveBill.current && billData) {
+      // TODO: เรียก API หรือฟังก์ชันสำหรับบันทึกบิลอัตโนมัติที่นี่ เช่น saveBill(billData)
+      // หลังบันทึกเสร็จอาจ redirect หรือแสดง toast ตามต้องการ
+      shouldSaveBill.current = false; // reset flag
+    }
+  }, [isAuthenticated, billData]);
 
   // Loading state
   if (loading) {
@@ -105,6 +119,19 @@ export default function SharedBillPage() {
       </div>
     );
   }
+
+  const handleLoginAndSaveBill = () => {
+    if (isAuthenticated) {
+      // ถ้า login แล้ว ให้บันทึกบิลทันที
+      if (billData) {
+        // TODO: เรียก API หรือฟังก์ชันสำหรับบันทึกบิล เช่น saveBill(billData)
+      }
+    } else {
+      // ถ้ายังไม่ login ให้ login แล้วบันทึกหลัง login สำเร็จ
+      shouldSaveBill.current = true;
+      openSignupModal();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -185,7 +212,7 @@ export default function SharedBillPage() {
             <div className="flex gap-3 justify-center">
               {billData.isTemporary && (
                 <button
-                  onClick={() => window.location.href = '/share-bill?action=signup'}
+                  onClick={handleLoginAndSaveBill}
                   className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center"
                 >
                   <AlertCircle className="w-4 h-4 mr-2" />

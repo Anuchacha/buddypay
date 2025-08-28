@@ -7,7 +7,6 @@ import { db } from '@/app/lib/firebase';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { useAuth } from '@/app/context/AuthContext';
-import { encrypt } from '@/app/lib/encryption';
 
 // อินเตอร์เฟซสำหรับผู้ใช้
 interface User {
@@ -253,7 +252,7 @@ export default function UserManagement() {
       await setDoc(doc(db, 'activityLogs', `admin_${Date.now()}`), {
         action,
         description,
-        userEmail: encrypt(currentUser.email || 'unknown'),
+        userEmail: currentUser.email || 'unknown',
         userName: currentUser.displayName || currentUser.email,
         ip: 'unknown', // ในสภาพแวดล้อมจริงควรมีการบันทึก IP
         timestamp: serverTimestamp(),

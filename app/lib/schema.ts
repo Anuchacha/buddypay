@@ -30,6 +30,7 @@ export const billSchema = z.object({
   createdAt: z.date().default(() => new Date()),
   userId: z.string().optional(), // เก็บ UID ของผู้ใช้จาก Firebase Auth
   status: z.enum(['paid', 'pending']).default('pending'), // สถานะการชำระเงินของบิลทั้งใบ
+  splitResults: z.array(z.any()).optional(), // เพิ่ม splitResults (optional)
 });
 
 // ประเภทข้อมูลจาก Zod schema

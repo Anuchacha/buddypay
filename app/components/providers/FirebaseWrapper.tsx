@@ -1,53 +1,27 @@
 'use client';
 
 import { ReactNode, createContext, useContext, useState, useEffect } from 'react';
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   signInWithPopup,
-  GoogleAuthProvider,
   onAuthStateChanged,
   updateProfile,
-  User
+  User,
+  GoogleAuthProvider
 } from 'firebase/auth';
+import { app, db, auth } from '@/app/lib/firebase';
 
-// กำหนดค่า Firebase config จากตัวแปรสภาพแวดล้อม
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// Initialize Firebase if not already initialized - ย้ายออกมานอก component
-let app: FirebaseApp;
-let auth: ReturnType<typeof getAuth>;
-let db: ReturnType<typeof getFirestore>;
-let googleProvider: GoogleAuthProvider;
-
-// สร้าง Firebase instances เฉพาะครั้งเดียว
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
-
-// สร้าง auth, db, และ provider เฉพาะครั้งเดียว
-auth = getAuth(app);
-db = getFirestore(app);
-googleProvider = new GoogleAuthProvider();
+// ใช้ GoogleAuthProvider จาก firebase/auth
+const googleProvider = new GoogleAuthProvider();
 
 // สร้าง context สำหรับใช้งาน Firebase
 interface FirebaseContextType {
-  app: ReturnType<typeof initializeApp>;
-  db: ReturnType<typeof getFirestore>;
-  auth: ReturnType<typeof getAuth>;
+  app: typeof app;
+  db: typeof db;
+  auth: typeof auth;
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -75,18 +49,24 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    
     try {
       // ใช้ Firebase instances ที่สร้างไว้แล้วข้างนอก
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
         setUser(currentUser);
         setLoading(false);
       });
-      
-      return () => unsubscribe();
     } catch (error) {
       console.error("Firebase initialization error:", error);
       setLoading(false);
     }
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   // Authentication methods

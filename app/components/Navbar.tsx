@@ -251,7 +251,10 @@ export default function Navbar() {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+              <DropdownMenuContent
+                align="end"
+                className="w-80 max-h-96 overflow-y-auto shadow-lg border border-gray-200 bg-white scrollbar-gutter-stable"
+              >
                 <DropdownMenuLabel className="flex items-center justify-between">
                   <span>แจ้งเตือนยอดค้างชำระ</span>
                   {pendingCount > 0 && (
