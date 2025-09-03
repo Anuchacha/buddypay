@@ -24,7 +24,7 @@ export default function StatisticsPage() {
     error
   } = useStatistics(user, loading);
 
-  // Header + Quick actions (reuse in both cases)
+  // Header + Quick actions
   const Header = ({ subtitle }: { subtitle?: string }) => (
     <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
       <div>
@@ -66,24 +66,13 @@ export default function StatisticsPage() {
               <StatisticsCards stats={stats} renderSafeAmount={renderSafeAmount} />
             </section>
 
-            {/* 2) ภาพรวมตามหมวด */}
+            {/* 2) ค่าใช้จ่ายตามหมวด */}
             <section className="mt-10">
               <h2 className="text-xl font-semibold mb-3">ค่าใช้จ่ายตามหมวดหมู่</h2>
               <StatisticsCharts stats={stats} categoryStats={categoryStats} />
             </section>
 
-            {/* 3) ผู้ร่วมบิลที่รอชำระ (ซ่อนถ้าไม่มี) */}
-            {!!stats.pendingParticipants?.length && (
-              <section className="mt-10">
-                <h2 className="text-xl font-semibold mb-3">ผู้ร่วมบิลที่รอชำระ</h2>
-                <PendingParticipants
-                  pendingParticipants={stats.pendingParticipants}
-                  totalPendingAmount={stats.totalPendingAmount}
-                />
-              </section>
-            )}
-
-            {/* 4) รายละเอียดเชิงลึก */}
+            {/* 3) รายละเอียดเพิ่มเติม */}
             <section className="mt-10">
               <h2 className="text-xl font-semibold mb-3">รายละเอียดเพิ่มเติม</h2>
               <StatisticsDetails
@@ -93,6 +82,17 @@ export default function StatisticsPage() {
                 calculatePercentage={calculatePercentage}
               />
             </section>
+
+            {/* 4) ผู้ร่วมบิลที่รอชำระ (ล่างสุด) */}
+            {!!stats.pendingParticipants?.length && (
+              <section className="mt-10">
+                <h2 className="text-xl font-semibold mb-3">ผู้ร่วมบิลที่รอชำระ</h2>
+                <PendingParticipants
+                  pendingParticipants={stats.pendingParticipants}
+                  totalPendingAmount={stats.totalPendingAmount}
+                />
+              </section>
+            )}
 
             {/* CTA ล่าง */}
             <div className="text-center mt-12">
@@ -139,15 +139,13 @@ export default function StatisticsPage() {
         <StatisticsCards stats={stats} renderSafeAmount={renderSafeAmount} />
       </section>
 
-      {/* 2) ภาพรวมตามหมวด */}
+      {/* 2) ค่าใช้จ่ายตามหมวด */}
       <section className="mt-10">
         <h2 className="text-xl font-semibold mb-3">ค่าใช้จ่ายตามหมวดหมู่</h2>
         <StatisticsCharts stats={stats} categoryStats={categoryStats} />
       </section>
 
-      
-
-      {/* 4) รายละเอียดเชิงลึก */}
+      {/* 3) รายละเอียดเพิ่มเติม */}
       <section className="mt-10">
         <h2 className="text-xl font-semibold mb-3">รายละเอียดเพิ่มเติม</h2>
         <StatisticsDetails
@@ -157,7 +155,8 @@ export default function StatisticsPage() {
           calculatePercentage={calculatePercentage}
         />
       </section>
-        {/* 3) ผู้ร่วมบิลที่รอชำระ (ซ่อนถ้าไม่มี) */}
+
+      {/* 4) ผู้ร่วมบิลที่รอชำระ (ล่างสุด) */}
       {!!stats.pendingParticipants?.length && (
         <section className="mt-10">
           <h2 className="text-xl font-semibold mb-3">ผู้ร่วมบิลที่รอชำระ</h2>
@@ -167,6 +166,7 @@ export default function StatisticsPage() {
           />
         </section>
       )}
+
       {/* CTA ล่าง */}
       <div className="text-center mt-12">
         <Button onClick={() => router.push('/share-bill')} className="mx-2">
@@ -176,10 +176,6 @@ export default function StatisticsPage() {
           ดูประวัติบิล
         </Button>
       </div>
-
-      
     </div>
-
-    
   );
 }
